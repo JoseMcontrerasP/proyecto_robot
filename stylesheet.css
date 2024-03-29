@@ -1,0 +1,64 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: honeydew;
+}
+h1{
+    text-align: center;
+    color: aliceblue;
+    margin-top: auto;
+    padding-top: 2%;
+    padding-bottom: 1rem;
+    background-color: cadetblue;
+}
+.potencia{
+    border: solid 5px  black;
+    background-color: azure;
+    text-align: center;
+    max-width: 8rem;
+    #wifi{
+        width:50% ;
+    }
+    
+}
+
+table{
+    border-collapse: collapse; 
+    max-width: fit-content; 
+}
+.modulos {
+    overflow: hidden;
+    max-width: 27rem;
+    border: solid 1px   black;
+    border-radius: 6px;
+    h2{
+
+        color: aliceblue;
+        background-color: cadetblue;
+        padding-top: 5px;
+        margin-top: 0px;
+    }
+    .sensores{
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    th{
+        color: aliceblue;
+        background-color: cadetblue;         
+    }
+    td{
+        text-align: center;
+        background-color: white;
+    }
+}
+
+.configuracion{
+    border: solid 1px black;
+    border-radius: 6px;
+    overflow: hidden;
+    max-width: fit-content;
+    caption{
+        color: aliceblue;
+        background-color: cadetblue;    
+    }   
+}
