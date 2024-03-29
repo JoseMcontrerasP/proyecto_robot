@@ -38,21 +38,32 @@ async function getjson(url){
 async function recibir(){
 
     const data  = await getjson('http://192.168.1.100/sensores.json');
+    let algo = Object.keys(data);
+    for(let z of algo){
+        for(let a = 0; a< data[z].length;a++){
+            document.getElementById("valor 1"+z[7]+a).innerHTML= data[z][a];
+        }
+    }
     /*modulo 1*/
-    document.getElementById("valor 110").innerHTML= data["sensor_1"];
+    
     /*los siguientes*/
     if(!document.getElementById("Modulo 2")){
-        console.log("no se encuentra el modulo 2");
+        //console.log("no se encuentra el modulo 2");
     }
     else{
         const data2  = await getjson('http://192.168.1.101/sensores.json');
-        document.getElementById("valor 210").innerHTML= data2["sensor_1"];
+        algo = Object.keys(data2);
+        for(let z of algo){
+            for(let a = 0; a< data[z].length;a++){
+                document.getElementById("valor 2"+z[7]+a).innerHTML= data2[z][a];
+            }
+        }
     }
 
 
 }
 
 let ides =[];
-let modulos ={}
+var modulos ={};
 document.getElementById("agregarmodulo").addEventListener("click", creartabla);
 var t=setInterval(recibir,1000);
