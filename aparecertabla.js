@@ -29,17 +29,11 @@ async function getjson(url){
     const response= await fetch(url);
     return response.json();
 }
-
-async function recibir(){
-    /*aqui agregar algo que haga ping a los servidores*/
-    
-    /*todos los modulos*/
-    for(let p=1; p<4;p++){ // el 3 es el numero de modulos a evaluer
-        if(!document.getElementById("Modulo "+ p)){
+async function recibirsensores(p){
+    if(!document.getElementById("Modulo "+ p)){
         console.log("no se encuentra el modulo "+ p);
         }
         else{
-            
             const data  = await getjson('http://192.168.1.10'+p+'/sensores.json');
             let algo = Object.keys(data);
             for(let z of algo){
@@ -47,11 +41,31 @@ async function recibir(){
                     document.getElementById("valor "+p+z[7]+a).innerHTML= data[z][a];
                 }
             }
-        }
-    }
+        }    
 }
 
-let ides =[];
-var modulos ={};
+function main(){
+    for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
+        let abo = AbortSignal.timeout(1000);
+        let url = 'http://192.168.1.10'+p+'/ping';
+        fetch(url,{signal: abo })
+            .then(function(response){
+                if (response.ok){
+                    if(!document.getElementById("Modulo "+ p)){
+                        creartabla();
+                    }else{
+                        recibirsensores(p);
+                    }
+                }
+                else{
+                    console.log("la respuesta del servidor no fue 200");
+                }
+        })
+        .catch(function(error){
+            console.log("no hay conexion con el servidor"+p);
+        });
+    }    
+}
+
 document.getElementById("agregarmodulo").addEventListener("click", creartabla);
-var t=setInterval(recibir,1000);
+var t=setInterval(main,1000);
