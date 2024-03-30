@@ -68,4 +68,4 @@ function main(){
 }
 
 document.getElementById("agregarmodulo").addEventListener("click", creartabla);
-var t=setInterval(main,1000);
+//var t=setInterval(main,1000);

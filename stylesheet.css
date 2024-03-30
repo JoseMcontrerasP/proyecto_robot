@@ -33,14 +33,16 @@ table{
     border-radius: 6px;
     margin-bottom: 1rem;
     h2{
-
+        cursor: pointer;
         color: aliceblue;
         background-color: cadetblue;
         padding-top: 5px;
         margin-top: 0px;
+        margin-bottom: 0px;
     }
     .sensores{
         text-align: left;
+        margin-top: 5px;
         margin-bottom: 5px;
     }
     th{
