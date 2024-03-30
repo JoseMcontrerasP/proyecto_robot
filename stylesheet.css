@@ -31,6 +31,7 @@ table{
     max-width: 27rem;
     border: solid 1px   black;
     border-radius: 6px;
+    margin-bottom: 1rem;
     h2{
 
         color: aliceblue;
