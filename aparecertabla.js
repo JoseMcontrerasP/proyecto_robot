@@ -29,6 +29,7 @@ async function getjson(url){
     const response= await fetch(url);
     return response.json();
 }
+
 async function recibirsensores(p){
     if(!document.getElementById("Modulo "+ p)){
         console.log("no se encuentra el modulo "+ p);
@@ -45,8 +46,8 @@ async function recibirsensores(p){
 }
 
 function wifi(){
-    const potencia  =   -20;
-    if(potencia<0 && potencia>-50){
+    const potencia  = -40 ;
+    if(potencia<0 && potencia>-20){
         document.getElementById("wifi").src="img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg";
     }
     else if(potencia<-20 && potencia> -40){
@@ -58,8 +59,8 @@ function wifi(){
     else if(potencia <-60 && potencia>-80){
         document.getElementById("wifi").src="img/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg";
     }
- 
 }
+
 function main(){
     for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
         let abo = AbortSignal.timeout(1000);
