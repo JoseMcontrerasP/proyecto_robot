@@ -44,7 +44,22 @@ async function recibirsensores(p){
         }    
 }
 
-
+function wifi(){
+    const potencia  =   -20;
+    if(potencia<0 && potencia>-50){
+        document.getElementById("wifi").src="img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(potencia<-20 && potencia> -40){
+        document.getElementById("wifi").src="img/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(potencia <-40 && potencia> -60){
+        document.getElementById("wifi").src="img/network_wifi_2_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(potencia <-60 && potencia>-80){
+        document.getElementById("wifi").src="img/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+ 
+}
 function main(){
     for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
         let abo = AbortSignal.timeout(1000);
@@ -68,5 +83,4 @@ function main(){
     }    
 }
 
-document.getElementById("agregarmodulo").addEventListener("click", creartabla);
-//var t=setInterval(main,1000); 
+var t=setInterval(wifi,1000); 
