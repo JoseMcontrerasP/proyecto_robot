@@ -44,6 +44,7 @@ async function recibirsensores(p){
         }    
 }
 
+
 function main(){
     for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
         let abo = AbortSignal.timeout(1000);
@@ -60,12 +61,12 @@ function main(){
                 else{
                     console.log("la respuesta del servidor no fue 200");
                 }
-        })
-        .catch(function(error){
-            console.log("no hay conexion con el servidor"+p);
-        });
+            })
+            .catch(function(error){
+                console.log("no hay conexion con el servidor"+p);
+            });
     }    
 }
 
 document.getElementById("agregarmodulo").addEventListener("click", creartabla);
-//var t=setInterval(main,1000);
+//var t=setInterval(main,1000); 
