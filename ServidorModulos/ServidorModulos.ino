@@ -1,10 +1,15 @@
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
 #include "ArduinoJson.h"
+#include "HTTPClient.h"
 
 // Set your access point network credentials
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
+
+const char* IPhead="http://192.168.1.101/RSSI.json";
+int answer;
+int requestinterval=5000;
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -23,6 +28,27 @@ JsonDocument readpot() {
   data2.add(44);
   data2.add(21);
   return sensores;
+}
+
+int getRequest(const char* servername){
+  HTTPClient http;
+  http.useHTTP10(true);
+  http.begin(servername);
+  int resultado;
+  int httpResponseCode=http.GET();
+  if(httpResponseCode > 0) {
+    if(httpResponseCode == HTTP_CODE_OK) {
+      DynamicJsonDocument doc(2048);
+      deserializeJson(doc, http.getStream());
+      resultado = doc["despliegue"];
+    }
+    else{
+      resultado = 0;
+      Serial.print("error");
+    }
+  }
+  http.end();
+  return resultado;
 }
 
 void setup(){
@@ -54,5 +80,9 @@ void setup(){
   server.begin();
 }
  
-void loop(){ 
+void loop(){  
+  JsonDocument doc; 
+  answer  = getRequest(IPhead);
+  Serial.print(answer);
+  delay(requestinterval);
 }

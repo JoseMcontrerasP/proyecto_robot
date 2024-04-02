@@ -65,6 +65,7 @@ async function wifi(){
 }
 
 function main(){
+    wifi();
     for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
         let abo = AbortSignal.timeout(1000);
         let url = 'http://192.168.1.10'+p+'/ping';
@@ -87,4 +88,4 @@ function main(){
     }    
 }
 
-setInterval(wifi,1000); 
+setInterval(main,1000); 

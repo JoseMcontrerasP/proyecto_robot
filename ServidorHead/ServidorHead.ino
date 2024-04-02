@@ -6,6 +6,7 @@
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
 
+int deploy  = 1;
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
@@ -24,10 +25,16 @@ JsonDocument readpot() {
   data2.add(21);
   return sensores;
 }
-JsonDocument RSSI(){
+JsonDocument power(){
   JsonDocument rssi;
   int valor=WiFi.RSSI();
+  if (valor<-70){
+    deploy++;
+  }
   rssi["rssi"]=valor;
+  rssi["despliegue"]=deploy;
+  Serial.println(deploy);
+  delay(1000);
   return rssi;
 }
 
@@ -52,7 +59,7 @@ void setup(){
 
     server.on("/RSSI.json", HTTP_GET, [](AsyncWebServerRequest *request){
     String response; 
-    serializeJsonPretty(RSSI(), response);
+    serializeJsonPretty(power(), response);
     request->send(200, "application/json", response);
   });
   
