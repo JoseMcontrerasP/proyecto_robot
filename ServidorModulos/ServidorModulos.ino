@@ -10,6 +10,7 @@ const char* password = "Passwordsupersegura";
 const char* IPhead="http://192.168.1.101/RSSI.json";
 int answer;
 int requestinterval=5000;
+bool flag = true;
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -54,6 +55,13 @@ int getRequest(const char* servername){
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
+
+  pinMode(12,OUTPUT);//servo union
+  pinMode(14, OUTPUT);//switvh comunicacion(router)
+  
+  digitalWrite(12,HIGH);
+  digitalWrite(14,LOW);
+  
   WiFi.begin(ssid,password);
   Serial.println("Connecting");
   while(WiFi.status() != WL_CONNECTED) { 
@@ -64,7 +72,7 @@ void setup(){
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
+  /*server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
     String response; 
     serializeJsonPretty(readpot(), response);
     request->send(200, "application/json", response);
@@ -77,12 +85,39 @@ void setup(){
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   // Start server
-  server.begin();
+  server.begin();*/
 }
- 
+
 void loop(){  
-  JsonDocument doc; 
-  answer  = getRequest(IPhead);
-  Serial.print(answer);
-  delay(requestinterval);
+  //el if puede cambiarse por un while( answer <1) y haga lo del Jsondocument;
+  if(answer >=  1){
+    while(flag){
+      Serial.print("desprendiendo modulo del robot");
+      digitalWrite(12,LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
+      digitalWrite(14, HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      Serial.println("Prendiendo nuevo modulo de conexión");
+      server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
+        String response; 
+        serializeJsonPretty(readpot(), response);
+        request->send(200, "application/json", response);
+      });
+      server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(200,"text/plain","1");
+      });
+      DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+      // Start server
+      server.begin();
+      Serial.println("servidor configurandose");
+      flag = false;
+    }
+    Serial.println("servidor funcionando");
+  }
+  else{
+    Serial.println("motores haciendo cosas");
+    JsonDocument doc; 
+    answer  = getRequest(IPhead);
+    delay(1000);
+    Serial.print("valor enviado por el modulo cabeza: ");
+    Serial.println(answer);
+  }
 }

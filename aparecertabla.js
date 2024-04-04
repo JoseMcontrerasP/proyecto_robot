@@ -88,4 +88,4 @@ function main(){
     }    
 }
 
-setInterval(main,1000); 
+setInterval(main,2000); 

@@ -15,6 +15,9 @@ JsonDocument readpot() {
   
   int potenciometro1 = analogRead(35);
   
+  Serial.print("valor del potenciometro: ");
+  Serial.println(potenciometro1);
+  
   JsonArray data = sensores["sensor_1"].to<JsonArray>();
   JsonArray data2= sensores["sensor_2"].to<JsonArray>();
   data.add(potenciometro1);
@@ -37,24 +40,6 @@ JsonDocument power(){
   return rssi;
 }
 
-String agregar(String nom){       //codigo que genera el siguiente SSID al cual el dispositivo se tiene que conectar.
-  String nombre = nom;            //recibe el SSID del wifi conectado en ese momento.
-  
-  for (int i = 2; i < 10; i++){   // se determinan todos los posibles modulos a los cuales se va a conectar en este caso 10, para más se debe modificar
-                                  // y parte el for desde el 2 ya que el valor 1 es el AP original. 
-    if(isDigit(nombre[3])){       // compara si el caracter numero 4 del ssid es numerico, aunque diga 3 es 4 ya que la cuenta parte de 0.
-      String id;                  // es así ya que se va a trabajar con redes del tipo ESPX donde X es un numero de 1 a 9. 
-      id = nombre[3];             // guarda el valor numerico del ssid en una variable string.
-      int val = id.toInt();       // transforma el valor del string en su valor numerico int.
-      while(i < val+1){           // mientras el valor de i sea menor al valor ya medido para que despues de desplegar distintos modulos  
-        i++;                      // no se repitan los nombres.
-      }
-      nombre += String(i);        // reutiliza la variable nombre donde se encuentra el nombre actual y le agrega el siguiente valor por ejemplo ESP12 
-      nombre.remove(3,1);         // elimina el valor del valor actual siguiendo el anterior ejemplo queda ESP2.
-      i = 11;                     // Hace i 11 para salir del bucle. creo que no es correcto como lo hice pero eso se arregla despues, mientras funcione.
-    }   
-  }
-  
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
