@@ -10,14 +10,13 @@ const char* password = "Passwordsupersegura";
 
 const char* IPhead="http://192.168.1.101/RSSI.json";
 int answer = 0;
-int comprobador =0;
+int comprobador = 0;
 bool flag = true;
-bool flag2 = true;
 
 WiFiMulti wifimulti;
 String nomwifi;
 
-int id = 1;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
+int id = 2;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
 // Create AsyncWebServer object on port 80
 
 AsyncWebServer server(80);
@@ -51,7 +50,7 @@ int getRequest(const char* servername){
       resultado = doc["despliegue"];
     }
     else{
-      resultado = 0;
+      resultado = -1;
       Serial.print("error");
     }
   }
@@ -75,8 +74,6 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
       i = 11;                     // Hace i 11 para salir del bucle. creo que no es correcto como lo hice pero eso se arregla despues, mientras funcione.
     }   
   }
-  Serial.print("Buscando el siguiente AP: ");
-  Serial.println(nombre);
   return nombre;
 }
 
@@ -84,22 +81,24 @@ void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
 
-  pinMode(12,OUTPUT);//servo union
-  pinMode(14, OUTPUT);//switvh comunicacion(router)
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
   
-  digitalWrite(12,HIGH);
-  digitalWrite(14,LOW);
+  pinMode(32,OUTPUT);//servo union
+  pinMode(33, OUTPUT);//switvh comunicacion(router)
   
-  wifimulti.addAP(ssid,password);
-  Serial.println("Connecting");
-  
-  if(wifimulti.run() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    nomwifi = WiFi.SSID();
-    Serial.println(WiFi.localIP());
+  digitalWrite(32,HIGH);
+  digitalWrite(33,LOW);
+  WiFi.begin(ssid,password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  nomwifi=WiFi.SSID();
 
   /*server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
     String response; 
@@ -118,25 +117,27 @@ void setup(){
 }
 
 void loop(){  
-  //el if puede cambiarse por un while( answer <1) y haga lo del Jsondocument;
-  
+  //el if puede cambiarse por un while( answer <1) y haga lo del Jsondocument; esto funciona bien.
   if (answer == id){
     while(flag){
-      const char* siguienteSSID = agregar(nomwifi).c_str();
-      Serial.println(siguienteSSID);
-      wifimulti.addAP(siguienteSSID,"Passwordsupersegura");
-      
-      Serial.println("desprendiendo modulo del robot");
-      digitalWrite(12,LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
-      delay(1000);
+      Serial.println("desconectando modulo de la cola");
+      digitalWrite(32,LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
+      delay(3000);
       Serial.println("Prendiendo nuevo modulo de conexión");
-      digitalWrite(14, HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      delay(3000);
+      digitalWrite(33, HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       WiFi.disconnect();
       delay(5000);
-      
-      if(wifimulti.run()!=WL_CONNECTED){
-        wifimulti.run();
-      }      
+      WiFi.begin(agregar(nomwifi).c_str(),"Passwordsupersegura");
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+      }
+      Serial.println("");
+      Serial.println("WiFi connected.");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+      nomwifi=WiFi.SSID();
       Serial.println("servidor configurandose");
       server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
         String response; 
@@ -153,32 +154,35 @@ void loop(){
       flag = false;
     }
     Serial.println("Servidor funcionando");
+    delay(1000);
   }
-  else if (answer<id){ 
+  else{ 
     nomwifi = WiFi.SSID();
-    if(answer != comprobador){
-      Serial.println("se tiene que conectar al ultimo modulo disponible");
-      wifimulti.addAP(agregar(nomwifi).c_str(),"Passwordsupersegura");
-      WiFi.disconnect();
-      delay(5000);
-      wifimulti.run();
-    }
-    else{
-      Serial.println("se mantiene la conexíon actual");
-    }
-
-    Serial.println("Motores moviendose");
     JsonDocument doc; 
     answer  = getRequest(IPhead);
-    delay(1000);
+    delay(1500);
     Serial.print("valor enviado por el modulo cabeza: ");
     Serial.println(answer);
-    //codigo del movimiento;
+    if(answer<id && answer != comprobador){
+      Serial.println("se tiene que conectar al ultimo modulo disponible");
+      WiFi.disconnect();
+      delay(5000);
+      WiFi.begin(agregar(nomwifi).c_str(),"Passwordsupersegura");
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+      }
+      Serial.println("");
+      Serial.println("WiFi connected.");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+      nomwifi=WiFi.SSID();
+    }
+    else if(answer>id){
+      Serial.Println("todo bien, debería ya estar desplegado");
+      delay(500);
+    }
     comprobador=answer; 
-
   }
-  else if (answer>id){
-    Serial.println("la señal de despliegue es mayor al id de este modulo");
-    Serial.println("así que no hay accion que realizar");
-  }   
+   
 }

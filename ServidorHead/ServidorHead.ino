@@ -63,16 +63,19 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
-  WifiMulti.addAP(ssid,password);
-  if(WifiMulti.run() == WL_CONNECTED) {
-    Serial.println("Connecting");
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    nomwifi=WiFi.SSID();
-    Serial.println(WiFi.localIP());
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  WiFi.setAutoReconnect(false);
+  WiFi.begin(ssid,password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
-  
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  nomwifi=WiFi.SSID();
 
   server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200,"text/plain","1");
