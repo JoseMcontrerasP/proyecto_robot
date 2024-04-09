@@ -1,5 +1,4 @@
 #include "WiFi.h"
-#include "WiFiMulti.h"
 #include "ESPAsyncWebServer.h"
 #include "ArduinoJson.h"
 #include "HTTPClient.h"
@@ -13,10 +12,9 @@ int answer = 0;
 int comprobador = 0;
 bool flag = true;
 
-WiFiMulti wifimulti;
 String nomwifi;
 
-int id = 2;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
+int id = 1;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
 // Create AsyncWebServer object on port 80
 
 AsyncWebServer server(80);
@@ -39,21 +37,34 @@ JsonDocument readpot() {
 
 int getRequest(const char* servername){
   HTTPClient http;
+  JsonDocument doc;
   http.useHTTP10(true);
   http.begin(servername);
   int resultado;
   int httpResponseCode=http.GET();
-  if(httpResponseCode > 0) {
-    if(httpResponseCode == HTTP_CODE_OK) {
-      DynamicJsonDocument doc(2048);
-      deserializeJson(doc, http.getStream());
-      resultado = doc["despliegue"];
+  while(WiFi.status()==WL_CONNECTED){
+    if(httpResponseCode > 0) {
+      if(httpResponseCode == HTTP_CODE_OK) {
+        deserializeJson(doc, http.getStream());
+        resultado = doc["despliegue"];
+        http.end();
+        delay(100);
+        return resultado;
+      }
+      else{
+        resultado = -1;
+        Serial.print("error");
+        http.end();
+        return resultado;
+      }
     }
     else{
-      resultado = -1;
-      Serial.print("error");
+      Serial.println("NO RECIBE RESULTADO");
+      resultado =  -1;
+      http.end();
+      return resultado;
     }
-  }
+  }  
   http.end();
   return resultado;
 }
@@ -80,9 +91,7 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
-
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
   
   pinMode(32,OUTPUT);//servo union
   pinMode(33, OUTPUT);//switvh comunicacion(router)
@@ -100,24 +109,11 @@ void setup(){
   Serial.println(WiFi.localIP());
   nomwifi=WiFi.SSID();
 
-  /*server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
-    String response; 
-    serializeJsonPretty(readpot(), response);
-    request->send(200, "application/json", response);
-  });
-  
-  server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200,"text/plain","1");
-  });
-
-
-  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-  // Start server
-  server.begin();*/
 }
 
 void loop(){  
   //el if puede cambiarse por un while( answer <1) y haga lo del Jsondocument; esto funciona bien.
+  nomwifi = WiFi.SSID(); 
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
@@ -127,17 +123,17 @@ void loop(){
       delay(3000);
       digitalWrite(33, HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       WiFi.disconnect();
-      delay(5000);
       WiFi.begin(agregar(nomwifi).c_str(),"Passwordsupersegura");
       while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
       }
       Serial.println("");
-      Serial.println("WiFi connected.");
+      Serial.print("WiFi connected:");
+      nomwifi=WiFi.SSID();
+      Serial.println(nomwifi);
       Serial.println("IP address: ");
       Serial.println(WiFi.localIP());
-      nomwifi=WiFi.SSID();
       Serial.println("servidor configurandose");
       server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
         String response; 
@@ -154,20 +150,15 @@ void loop(){
       flag = false;
     }
     Serial.println("Servidor funcionando");
-    delay(1000);
   }
-  else{ 
-    nomwifi = WiFi.SSID();
-    JsonDocument doc; 
+  else{
     answer  = getRequest(IPhead);
-    delay(1500);
-    Serial.print("valor enviado por el modulo cabeza: ");
-    Serial.println(answer);
+    Serial.println(answer); 
     if(answer<id && answer != comprobador){
       Serial.println("se tiene que conectar al ultimo modulo disponible");
       WiFi.disconnect();
       delay(5000);
-      WiFi.begin(agregar(nomwifi).c_str(),"Passwordsupersegura");
+      WiFi.begin(agregar(nomwifi).c_str(),password);
       while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -177,12 +168,7 @@ void loop(){
       Serial.println("IP address: ");
       Serial.println(WiFi.localIP());
       nomwifi=WiFi.SSID();
-    }
-    else if(answer>id){
-      Serial.Println("todo bien, debería ya estar desplegado");
-      delay(500);
-    }
-    comprobador=answer; 
+      comprobador=answer;
+    }  
   }
-   
 }
