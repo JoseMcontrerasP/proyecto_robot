@@ -10,6 +10,8 @@ String nomwifi;
 
 int deploy  = 0;
 int valorpotencia;
+
+
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
@@ -59,15 +61,18 @@ void setup(){
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid,password);
+  WiFi.setSleep(false);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.print("WiFi connected: ");
   nomwifi=WiFi.SSID();
+  Serial.println(nomwifi);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
   server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200,"text/plain","1");
   });
@@ -80,8 +85,8 @@ void setup(){
     String response; 
     serializeJsonPretty(power(), response);
     request->send(200, "application/json", response);
-    delay(500);
-    if (valorpotencia <-65){
+    if (valorpotencia <-70){
+      delay(300);
       WiFi.disconnect();
     }   
   });
@@ -99,8 +104,10 @@ void loop(){
       Serial.print(".");
     }
     Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.println("IP address: ");
+    Serial.print("WiFi connected: ");
+    nomwifi=WiFi.SSID();
+    Serial.println(nomwifi);
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
   }
 }
