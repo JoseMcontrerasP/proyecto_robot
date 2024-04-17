@@ -10,20 +10,22 @@
     <title> Central Robot </title>
 </head>
 <body>
-    <h1>Pagina principal</h1>
-    <div id="todos">
-
-        <div class="potencia">
-            <h3>potencia de la señal</h3>
-            <img alt="figura del wifi" src="/img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg" id="wifi">
-            <p id="dbm">Aun no se ha inciado el wifi</p>
+    <div class="row titulo">
+        <div class="row col-4 potencia" >
+            <h3 class="col-5">potencia de la señal</h3>
+            <img alt="figura del wifi" src="/img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg" id="wifi" class="col-4">
+            <p id="dbm" class=" col-4">Aun no se ha inciado el wifi</p>
         </div>
-        <img src="http://192.168.1.120:81/stream" alt="" id="video">
-        <div id="bloquesitos" class="row">
-            <div class="modulos col-4" id="Modulo 1">
+        <h1 class="col-8">Pagina principal</h1>
+    </div>
+    
+    <div id="linea1" class="row">
+        <img src="http://192.168.1.120:81/stream" alt="" id="video" class="col-6">
+        <div id="bloquesitos" class=" row col-6">
+            <div class="modulos col-6" id="Modulo 1">
                 <h2>Modulo 1</h2>
+                <caption class="sensores"> Sensor numero 1:</caption>
                 <table>
-                    <caption class="sensores"> Sensor numero 1:</caption>
                     <tr>
                         <th>NH3</th>
                         <th>algo2</th>
@@ -32,9 +34,9 @@
                         <td id="valor 110">0</td>
                         <td id="valor 111">0</td>
                     </tr>
-                </table>
+                </table>      
+                <caption class="sensores"> Sensor numero 2:</caption>
                 <table>
-                    <caption class="sensores"> Sensor numero 2:</caption>
                     <tr>
                         <th>NH3</th>
                         <th>algo2</th>
@@ -45,7 +47,7 @@
                     </tr>
                 </table>
             </div>
-        </div>
+        </div>       
         <!--<div class="configuracion">
                 <table>
                     <caption> Configuración </caption>
@@ -64,7 +66,8 @@
                 </table>
             </div>
             -->
-    </div>    
+    </div>
+    <button id="demo" >boton</button>  
     <script src="aparecertabla.js"></script>
 </body>
 </html>

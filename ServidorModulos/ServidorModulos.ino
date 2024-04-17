@@ -7,7 +7,8 @@
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
 
-const char* IPhead="http://192.168.1.101/RSSI.json";
+const char* IPhead  = "http://192.168.1.101/RSSI.json";
+const char* IPpost  = "http://192.168.1.101/estadoModulos";
 int answer = 0;
 int comprobador = 0;
 bool flag = true;
@@ -16,17 +17,20 @@ String nomwifi;
 
 int id = 1;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
 // Create AsyncWebServer object on port 80
+int status = 0;
 
+IPAddress local_IP(192, 168, 1, 101+id);
+
+IPAddress gateway(192, 168, 1, 1);
+
+IPAddress subnet(255, 255, 255, 0);
 
 AsyncWebServer server(80);
 
 JsonDocument readpot() {
   JsonDocument sensores;
   
-  int potenciometro1 = analogRead(35);
-  
-  Serial.println(potenciometro1);
-  
+  int potenciometro1 = analogRead(35);  
   JsonArray data = sensores["sensor_1"].to<JsonArray>();
   JsonArray data2= sensores["sensor_2"].to<JsonArray>();
   data.add(potenciometro1);
@@ -67,8 +71,16 @@ int getRequest(const char* servername){
   }  
   http.end();
   return resultado;
+
 }
 
+void postRequest(const char* servername, int identificador, int status){
+  HTTPClient http;
+  String estado = "?modulo="  + String(identificador)  + "&status=" + String(status);
+  http.begin(servername);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  http.POST(estado);
+}
 String agregar(String nom){       //codigo que genera el siguiente SSID al cual el dispositivo se tiene que conectar.
   String nombre = nom;            //recibe el SSID del wifi conectado en ese momento.
   for (int i = 2; i < 10; i++){   // se determinan todos los posibles modulos a los cuales se va a conectar en este caso 10, para más se debe modificar
@@ -92,9 +104,12 @@ void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
+  if (!WiFi.config(local_IP, gateway, subnet)) {
+    Serial.println("STA Failed to configure");
+  }
   
   pinMode(32,OUTPUT);//servo union
-  pinMode(33, OUTPUT);//switvh comunicacion(router)
+  pinMode(33, OUTPUT);//switch comunicacion(router)
   
   digitalWrite(32,HIGH);
   digitalWrite(33,LOW);
@@ -116,7 +131,6 @@ void setup(){
 }
 
 void loop(){  
-  //el if puede cambiarse por un while( answer <1) y haga lo del Jsondocument; esto funciona bien.
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
@@ -126,7 +140,8 @@ void loop(){
       Serial.println("Prendiendo nuevo modulo de conexión");
       digitalWrite(33,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       delay(3000);
-      
+      status = answer;
+      postRequest(IPpost, id, status);
       WiFi.disconnect();
       WiFi.begin(agregar(nomwifi).c_str(),"Passwordsupersegura");
       while (WiFi.status()  !=  WL_CONNECTED) {
@@ -163,15 +178,19 @@ void loop(){
     Serial.println(answer); 
     if(answer < id && answer != comprobador){
       Serial.println("se tiene que conectar al ultimo modulo disponible");
+      status  = answer;
+      postRequest(IPpost, id,  status);
+      delay(5000);
       WiFi.disconnect();
       WiFi.begin(agregar(nomwifi).c_str(),password);
       while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
       }
+      delay(1000);
       Serial.println("");
       Serial.print("WiFi connected: ");
-      nomwifi=WiFi.SSID();
+      nomwifi =  WiFi.SSID();
       Serial.println(nomwifi);
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());

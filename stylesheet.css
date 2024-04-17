@@ -3,23 +3,27 @@ body {
     padding: 0;
     background-color: honeydew;
 }
-h1{
-    text-align: center;
+.titulo{
     color: aliceblue;
     margin-top: auto;
     padding-top: 2%;
     padding-bottom: 1rem;
+    margin-bottom: 1%;
     background-color: cadetblue;
+    h1{
+        padding-left: 10%;
+        padding-right: 10%;
+    }
+
 }
 .potencia{
+    color: black;
     border: solid 5px  black;
     background-color: azure;
-    text-align: center;
-    max-width: 8rem;
     #wifi{
-        width:50% ;
+        align-items: center;
+        max-width: 20%;
     }
-    
 }
 
 table{
@@ -28,10 +32,10 @@ table{
 }
 .modulos {
     overflow: hidden;
-    max-width: 27rem;
     border: solid 1px   black;
     border-radius: 6px;
-    margin-bottom: 1rem;
+    padding-left: 0%;
+    padding-right: 0%;
     h2{
         cursor: pointer;
         color: aliceblue;
@@ -39,6 +43,7 @@ table{
         padding-top: 5px;
         margin-top: 0px;
         margin-bottom: 0px;
+        
     }
     .sensores{
         text-align: left;
