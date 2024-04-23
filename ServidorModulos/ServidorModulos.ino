@@ -187,13 +187,13 @@ void loop(){
         delay(500);
         Serial.print(".");
       }
-      delay(1000);
       Serial.println("");
       Serial.print("WiFi connected: ");
       nomwifi =  WiFi.SSID();
       Serial.println(nomwifi);
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());
+      delay(4000);
     }
     comprobador = answer;
     delay(200);  

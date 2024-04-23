@@ -6,10 +6,11 @@
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
 
-IPAddress remote1_IP(192,168,1,137);
+IPAddress remote1_IP(192,168,1,100);
 
 String nomwifi;
 
+int idmin;
 int deploy  = 0;
 int valorpotencia;
 
@@ -25,24 +26,20 @@ AsyncWebServer server(80);
 JsonDocument listamodulos;
 bool confirmacion(JsonDocument estados){
   bool val;
-  for(int i=1;i<estados.size()+1;i++){
-    if(i<deploy){
-      estados.remove(String(i));
-    }
-    else if(estados[String(i)] == String(deploy) && deploy  > 0){
-      val= true;  
+  for(JsonPair kv : estados.as<JsonObject>()){
+    int key = atoi(kv.key().c_str());
+    int value = atoi(estados[String(key)]);
+    if(value == deploy && deploy  > 0){
+      val = true;
     }
     else{
       return false;
     }
   }
-  if (val  ==  true){
-    return true;
-  }
-  else{
-    return false;
-  }
+  listamodulos.remove(String(idmin));
+  return val;
 }
+
 JsonDocument readpot() {
   JsonDocument sensores;
   int potenciometro1 = analogRead(35);
@@ -55,15 +52,37 @@ JsonDocument readpot() {
   return sensores;
 }
 
-JsonDocument power(){
+JsonDocument power(int id, JsonDocument estados){
   JsonDocument rssi;
   int valor=WiFi.RSSI();
-  if (valor<-70){
-    deploy++;
+  if(id !=  0){
+    //Serial.println("no es el pc el que hace la peticion");
+    idmin = id;
+    //Serial.print("id del cliente: ");
+    //Serial.println(id);
+    for(JsonPair kv : estados.as<JsonObject>()){
+      int key = atoi(kv.key().c_str());
+      Serial.print("key: ");
+      Serial.println(key);
+      if(key  < idmin){
+        idmin =  key;
+        //Serial.print("nuevo Idmin: ");
+        //Serial.println(idmin);
+      }
+    }
+    Serial.print("id min:");
+    Serial.println(idmin);
+    if(valor<-70 && id == idmin){
+      deploy++;
+    }
   }
-  rssi["despliegue"]=deploy;
-  rssi["rssi"]=valor;
-  valorpotencia=valor;
+  else{
+    Serial.println("es el pc el que hace la peticion");
+  }
+
+  rssi["despliegue"]  = deploy;
+  rssi["rssi"]  = valor;
+  valorpotencia = valor;
   //Serial.println(deploy);
   return rssi;
 }
@@ -88,7 +107,6 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
 }
 
 void setup(){
-  // Serial port for debugging purposes
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -117,19 +135,20 @@ void setup(){
   });
   server.on("/RSSI.json", HTTP_GET, [](AsyncWebServerRequest *request){
     String response;
+    char ip = request->client()->remoteIP().toString()[12];
+    int ia = (ip - '0') - 1;
     if(request->client()->remoteIP()!= remote1_IP){
-      char ip = request->client()->remoteIP().toString()[12];
-      int ia = (ip - '0') - 1;
-      Serial.print("Id del cliente:");
-      Serial.println(ia);
+      //Serial.print("Id del cliente:");
+      //Serial.println(ia);
       if(!listamodulos.containsKey(String(ia))){
         listamodulos[String(ia)] = "0";
       }
     }
     else{
-      Serial.print("es el PCs");
+      //Serial.println("es el PC");
+      ia=0;
     }  
-    serializeJsonPretty(power(), response);
+     serializeJsonPretty(power(ia,listamodulos), response);  
     request->send(200, "application/json", response);
   });
   server.on("/estadoModulos", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -152,7 +171,6 @@ DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   // Start server
   server.begin();
 }
- 
 void loop(){
   if(WiFi.status()!= WL_CONNECTED /*&& valorpotencia<-70*/){
     String nel = agregar(nomwifi);
