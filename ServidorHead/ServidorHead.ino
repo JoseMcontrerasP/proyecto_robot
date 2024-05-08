@@ -72,13 +72,13 @@ JsonDocument power(int id, JsonDocument estados){
     }
     Serial.print("id min:");
     Serial.println(idmin);
-    if(valor<-70 && id == idmin){
+    if(valor<-85 && id == idmin){
       deploy++;
     }
   }
-  else{
+  /*else{
     Serial.println("es el pc el que hace la peticion");
-  }
+  }*/
 
   rssi["despliegue"]  = deploy;
   rssi["rssi"]  = valor;

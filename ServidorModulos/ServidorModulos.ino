@@ -15,7 +15,7 @@ bool flag = true;
 
 String nomwifi;
 
-int id = 1;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
+int id = 2;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
 // Create AsyncWebServer object on port 80
 int status = 0;
 
@@ -47,7 +47,7 @@ int getRequest(const char* servername){
   http.begin(servername);
   int resultado;
   int httpResponseCode=http.GET();
-  while(WiFi.status()==WL_CONNECTED){
+  while(WiFi.status() == WL_CONNECTED){
     if(httpResponseCode > 0) {
       if(httpResponseCode == HTTP_CODE_OK) {
         deserializeJson(doc, http.getStream());
@@ -63,9 +63,9 @@ int getRequest(const char* servername){
       }
     }
     else{
-      Serial.println("NO RECIBE RESULTADO");
-      resultado =  -1;
+      Serial.println("intentando de nuevo");
       http.end();
+      resultado = getRequest(servername);
       return resultado;
     }
   }  
@@ -195,6 +195,7 @@ void loop(){
       Serial.println(WiFi.localIP());
       delay(4000);
     }
+    //aqui colocar el codigo del movimiento.
     comprobador = answer;
     delay(200);  
   }
