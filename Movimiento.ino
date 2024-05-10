@@ -1,14 +1,16 @@
 #include <Ps3Controller.h>
+#include "ScioSense_ENS160.h"
+#include <Adafruit_AHTX0.h>
 #include <ESP32Servo.h>
 #include <Wire.h>
 
-#define enA 21
-#define in1 19
-#define in2 18
+#define enA 19
+#define in1 18
+#define in2 5
 #define in3 26
 #define in4 27
 #define enB 14
-#define SERVO_PINA 2
+#define SERVO_PINA 15
 #define Ledbluetooth 23
 
 const int motorFreq = 1000;
@@ -23,8 +25,12 @@ int rightX = 0;
 int rightY = 0;
 int leftX;
 int leftY;
+int tempC; 
+int humidity; 
 
 Servo sbrazo;
+Adafruit_AHTX0 aht;
+ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
 
 void notify() {
   leftX = (Ps3.data.analog.stick.lx);
@@ -118,6 +124,7 @@ void setup() {
   Ps3.attach(notify);
   Ps3.attachOnConnect(onConnect);
   Ps3.begin("00:00:00:00:00:01");
+  while (!Serial) {}
   sbrazo.attach(SERVO_PINA);
   sbrazo.write(servoPos);
   pinMode(enA, OUTPUT);
@@ -131,10 +138,39 @@ void setup() {
   ledcSetup(motorBChannel, motorFreq, motorResolution);
   ledcAttachPin(enA, motorAChannel);
   ledcAttachPin(enB, motorBChannel);
+  ens160.begin();
+  Serial.println(ens160.available() ? "done." : "failed!");
+  if (ens160.available()) {
+    Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
+    Serial.print("."); Serial.print(ens160.getMinorRev());
+    Serial.print("."); Serial.println(ens160.getBuild());
+    Serial.println(ens160.setMode(ENS160_OPMODE_STD) ? "done." : "failed!");
+  }
+  if (! aht.begin()) {
+    Serial.println("Could not find AHT? Check wiring");
+    while (1) delay(10);
+  }
+  Serial.println("AHT20 no detectado");
 }
 
 void loop() {
-  if (Ps3.isConnected()) {
+ if (!Ps3.isConnected())
+    return;
+  sensors_event_t humidity1, temp;
+  aht.getEvent(&humidity1, &temp);
+  tempC = (temp.temperature);
+  humidity = (humidity1.relative_humidity);
+  int MiCS = analogRead(34);
+  Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
+  Serial.print("Humedad: "); Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
+  Serial.print("MiCS5524: "); Serial.print(MiCS); Serial.println("\t");
+  if (ens160.available()) {
+    ens160.set_envdata(tempC, humidity);
+    ens160.measure(true);
+    ens160.measureRaw(true);
+    Serial.print("AQI: ");Serial.print(ens160.getAQI());Serial.print("\t");
+    Serial.print("TVOC: ");Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    Serial.print("eCO2: ");Serial.print(ens160.geteCO2());Serial.println("ppm\t");
   }
   delay(500);
 }
