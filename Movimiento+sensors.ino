@@ -37,60 +37,49 @@ void notify() {
   leftY = (Ps3.data.analog.stick.ly);
   rightX = (Ps3.data.analog.stick.rx);
   rightY = (Ps3.data.analog.stick.ry);
-
+  int speedX = (abs(rightX) * 2);
+  int speedY = (abs(rightY) * 2);
+  //Levantamiento del brazo
   if (leftY < -100) {
     servoPos = 90;
     sbrazo.write(servoPos);
     delay(10);
-  } 
-  else {
-    if (leftX < -10 && servoPos < 180) {
-      servoPos++;
-      sbrazo.write(servoPos);
-      delay(10);
+  } else {
+      if (leftX < -10 && servoPos < 180) {
+        servoPos++;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
+      if (leftX > 10 && servoPos > 0) {
+        servoPos--;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
     }
-    if (leftX > 10 && servoPos > 0) {
-      servoPos--;
-      sbrazo.write(servoPos);
-      delay(10);
-    }
-  }
-
   if (rightY < 0) {
     motorDir = true;
-  } 
-  else {
+  } else {
     motorDir = false;
-  }
-
-  int speedX = (abs(rightX) * 2);
-  int speedY = (abs(rightY) * 2);
+    }
 
   if (rightX < -10) {
     motorAPWM = speedY - speedX;
     motorBPWM = speedY + speedX;
-  } 
-  else if (rightX > 10) {
+  } else if (rightX > 10) {
       motorAPWM = speedY + speedX;
       motorBPWM = speedY - speedX;
-    } 
-  else {
+    } else {
       motorAPWM = speedY;
       motorBPWM = speedY;
-    }
-  motorAPWM = constrain(motorAPWM, 0, 150);
-  motorBPWM = constrain(motorBPWM, 0, 150);
-
+      }
+  motorAPWM = constrain(motorAPWM, 0, 255);
+  motorBPWM = constrain(motorBPWM, 0, 255);
   moveMotors(motorAPWM, motorBPWM, motorDir);
 
-  Serial.print("X value = ");
-  Serial.print(rightX);
-  Serial.print(" - Y value = ");
-  Serial.print(rightY);
-  Serial.print(" - Motor A = ");
-  Serial.print(motorAPWM);
-  Serial.print(" - Motor B = ");
-  Serial.println(motorBPWM);
+  Serial.print("X = "); Serial.print(rightX);
+  Serial.print("Y = "); Serial.print(rightY);
+  Serial.print("Motor A = "); Serial.print(motorAPWM); 
+  Serial.print("Motor B = "); Serial.println(motorBPWM);
 }
 
 void onConnect() {
@@ -99,17 +88,12 @@ void onConnect() {
 
 void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
   if (!mtrdir) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
-
+    digitalWrite(in1, HIGH); digitalWrite(in2, LOW); //Motor A directa
+    digitalWrite(in3, HIGH); digitalWrite(in4, LOW); //Motor B directa
   } else {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-  }
+    digitalWrite(in1, LOW); digitalWrite(in2, HIGH); //Motor A reversa
+    digitalWrite(in3, LOW); digitalWrite(in4, HIGH); //Motor B reversa
+    }
   ledcWrite(motorAChannel, mtrAspeed);
   ledcWrite(motorBChannel, mtrBspeed);
 }
@@ -125,19 +109,13 @@ void setup() {
   Ps3.attachOnConnect(onConnect);
   Ps3.begin("00:00:00:00:00:01");
   while (!Serial) {}
-  sbrazo.attach(SERVO_PINA);
-  sbrazo.write(servoPos);
-  pinMode(enA, OUTPUT);
-  pinMode(enB, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
+  sbrazo.attach(SERVO_PINA); sbrazo.write(servoPos);
   pinMode(Ledbluetooth, OUTPUT);
+  pinMode(enA, OUTPUT); pinMode(in1, OUTPUT); pinMode(in2, OUTPUT); //Motor A
+  pinMode(enB, OUTPUT); pinMode(in3, OUTPUT); pinMode(in4, OUTPUT); //Motor B
   ledcSetup(motorAChannel, motorFreq, motorResolution);
   ledcSetup(motorBChannel, motorFreq, motorResolution);
-  ledcAttachPin(enA, motorAChannel);
-  ledcAttachPin(enB, motorBChannel);
+  ledcAttachPin(enA, motorAChannel); ledcAttachPin(enB, motorBChannel);
   ens160.begin();
   Serial.println(ens160.available() ? "done." : "failed!");
   if (ens160.available()) {
@@ -154,7 +132,7 @@ void setup() {
 }
 
 void loop() {
- if (!Ps3.isConnected())
+  if (!Ps3.isConnected())
     return;
   sensors_event_t humidity1, temp;
   aht.getEvent(&humidity1, &temp);
@@ -162,15 +140,14 @@ void loop() {
   humidity = (humidity1.relative_humidity);
   int MiCS = analogRead(34);
   Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
-  Serial.print("Humedad: "); Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
-  Serial.print("MiCS5524: "); Serial.print(MiCS); Serial.println("\t");
+  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
+  Serial.print("MiCS5524: ");    Serial.print(MiCS); Serial.println("\t");
   if (ens160.available()) {
     ens160.set_envdata(tempC, humidity);
-    ens160.measure(true);
-    ens160.measureRaw(true);
-    Serial.print("AQI: ");Serial.print(ens160.getAQI());Serial.print("\t");
-    Serial.print("TVOC: ");Serial.print(ens160.getTVOC());Serial.print("ppb\t");
-    Serial.print("eCO2: ");Serial.print(ens160.geteCO2());Serial.println("ppm\t");
+    ens160.measure(true);   ens160.measureRaw(true);
+    Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
+    Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
   }
   delay(500);
 }
