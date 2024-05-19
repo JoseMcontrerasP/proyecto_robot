@@ -73,7 +73,6 @@ int getRequest(const char* servername){
   return resultado;
 
 }
-
 void postRequest(const char* servername, int identificador, int status){
   HTTPClient http;
   String estado = "?modulo="  + String(identificador)  + "&status=" + String(status);
@@ -114,8 +113,8 @@ void setup(){
   digitalWrite(32,HIGH);
   digitalWrite(33,LOW);
 
-  WiFi.begin(ssid,password);
   WiFi.setSleep(false);
+  WiFi.begin(ssid,password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
