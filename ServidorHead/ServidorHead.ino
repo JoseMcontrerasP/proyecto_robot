@@ -53,61 +53,49 @@ JsonDocument control;
 
 Servo sbrazo;
 void notify() {
-  //acá lo que llega del control
-
+  int speedX = (abs(rightX) * 2);
+  int speedY = (abs(rightY) * 2);
+  //Levantamiento del brazo
   if (leftY < -100) {
     servoPos = 90;
     sbrazo.write(servoPos);
     delay(10);
-  } 
-  else {
-    if (leftX < -10 && servoPos < 180) {
-      servoPos++;
-      sbrazo.write(servoPos);
-      delay(10);
+  } else {
+      if (leftX < -10 && servoPos < 180) {
+        servoPos++;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
+      if (leftX > 10 && servoPos > 0) {
+        servoPos--;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
     }
-    if (leftX > 10 && servoPos > 0) {
-      servoPos--;
-      sbrazo.write(servoPos);
-      delay(10);
-    }
-  }
-
   if (rightY < 0) {
     motorDir = true;
-  } 
-  else {
+  } else {
     motorDir = false;
-  }
-
-  int speedX = (abs(rightX) * 2);
-  int speedY = (abs(rightY) * 2);
+    }
 
   if (rightX < -10) {
     motorAPWM = speedY - speedX;
     motorBPWM = speedY + speedX;
-  } 
-  else if (rightX > 10) {
+  } else if (rightX > 10) {
       motorAPWM = speedY + speedX;
       motorBPWM = speedY - speedX;
-    } 
-  else {
+    } else {
       motorAPWM = speedY;
       motorBPWM = speedY;
-    }
-  motorAPWM = constrain(motorAPWM, 0, 150);
-  motorBPWM = constrain(motorBPWM, 0, 150);
-
+      }
+  motorAPWM = constrain(motorAPWM, 0, 255);
+  motorBPWM = constrain(motorBPWM, 0, 255);
   moveMotors(motorAPWM, motorBPWM, motorDir);
 
-  Serial.print("X value = ");
-  Serial.print(rightX);
-  Serial.print(" - Y value = ");
-  Serial.print(rightY);
-  Serial.print(" - Motor A = ");
-  Serial.print(motorAPWM);
-  Serial.print(" - Motor B = ");
-  Serial.println(motorBPWM);
+  Serial.print("X = "); Serial.print(rightX);
+  Serial.print("Y = "); Serial.print(rightY);
+  Serial.print("Motor A = "); Serial.print(motorAPWM); 
+  Serial.print("Motor B = "); Serial.println(motorBPWM);
 }
 
 void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
@@ -216,10 +204,15 @@ void notFound(AsyncWebServerRequest *request) {
 
 AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/control", [](AsyncWebServerRequest *request, JsonVariant &json) {
   JsonObject jsonObj = json.as<JsonObject>();
-  String texto;
-  serializeJsonPretty(jsonObj,texto);
-  Serial.println(texto);
+  Serial.println("llega señal del control");
   request->send(200,"text/plain", "ok");
+  rightX = jsonObj["rightX"];
+  Serial.print("rightX: ");
+  Serial.println(rightX);
+  rightY = jsonObj["rightY"];
+  Serial.print("rightY: ");
+  Serial.println(rightY);
+  notify();
   // ...
 });
 
