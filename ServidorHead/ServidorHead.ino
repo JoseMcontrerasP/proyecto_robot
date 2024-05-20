@@ -2,16 +2,18 @@
 #include "ESPAsyncWebServer.h"
 #include "AsyncJson.h"
 #include "ArduinoJson.h"
+#include "ScioSense_ENS160.h"
+#include "Adafruit_AHTX0.h"
 #include "ESP32Servo.h"
 #include "Wire.h"
 
-#define enA 21
-#define in1 19
-#define in2 18
+#define enA 19
+#define in1 18
+#define in2 5
 #define in3 26
 #define in4 27
 #define enB 14
-#define SERVO_PINA 2
+#define SERVO_PINA 15
 #define Ledbluetooth 23
 
 const int motorFreq = 1000;
@@ -26,6 +28,11 @@ int rightX = 0;
 int rightY = 0;
 int leftX;
 int leftY;
+int tempC; 
+int humidity; 
+
+Adafruit_AHTX0 aht;
+ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
 
 // Set your access point network credentials
 const char* ssid     = "ESP1";
@@ -52,77 +59,61 @@ JsonDocument listamodulos;
 JsonDocument control;
 
 Servo sbrazo;
-void notify() {
-  //acá lo que llega del control
 
+void notify() {
+  int speedX = (abs(rightX) * 2);
+  int speedY = (abs(rightY) * 2);
+  //Levantamiento del brazo
   if (leftY < -100) {
     servoPos = 90;
     sbrazo.write(servoPos);
     delay(10);
-  } 
-  else {
-    if (leftX < -10 && servoPos < 180) {
-      servoPos++;
-      sbrazo.write(servoPos);
-      delay(10);
+  } else {
+      if (leftX < -10 && servoPos < 180) {
+        servoPos++;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
+      if (leftX > 10 && servoPos > 0) {
+        servoPos--;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
     }
-    if (leftX > 10 && servoPos > 0) {
-      servoPos--;
-      sbrazo.write(servoPos);
-      delay(10);
-    }
-  }
-
   if (rightY < 0) {
     motorDir = true;
-  } 
-  else {
+  } else {
     motorDir = false;
-  }
-
-  int speedX = (abs(rightX) * 2);
-  int speedY = (abs(rightY) * 2);
+    }
 
   if (rightX < -10) {
     motorAPWM = speedY - speedX;
     motorBPWM = speedY + speedX;
-  } 
-  else if (rightX > 10) {
+  } else if (rightX > 10) {
       motorAPWM = speedY + speedX;
       motorBPWM = speedY - speedX;
-    } 
-  else {
+    } else {
       motorAPWM = speedY;
       motorBPWM = speedY;
-    }
-  motorAPWM = constrain(motorAPWM, 0, 150);
-  motorBPWM = constrain(motorBPWM, 0, 150);
-
+      }
+  motorAPWM = constrain(motorAPWM, 0, 255);
+  motorBPWM = constrain(motorBPWM, 0, 255);
   moveMotors(motorAPWM, motorBPWM, motorDir);
 
-  Serial.print("X value = ");
-  Serial.print(rightX);
-  Serial.print(" - Y value = ");
-  Serial.print(rightY);
-  Serial.print(" - Motor A = ");
-  Serial.print(motorAPWM);
-  Serial.print(" - Motor B = ");
-  Serial.println(motorBPWM);
+  Serial.print("X = "); Serial.print(rightX);
+  Serial.print("Y = "); Serial.print(rightY);
+  Serial.print("Motor A = "); Serial.print(motorAPWM); 
+  Serial.print("Motor B = "); Serial.println(motorBPWM);
 }
 
 void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
   if (!mtrdir) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
-
+    digitalWrite(in1, HIGH); digitalWrite(in2, LOW); //Motor A directa
+    digitalWrite(in3, HIGH); digitalWrite(in4, LOW); //Motor B directa
   } else {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-  }
+    digitalWrite(in1, LOW); digitalWrite(in2, HIGH); //Motor A reversa
+    digitalWrite(in3, LOW); digitalWrite(in4, HIGH); //Motor B reversa
+    }
   ledcWrite(motorAChannel, mtrAspeed);
   ledcWrite(motorBChannel, mtrBspeed);
 }
@@ -143,15 +134,34 @@ bool confirmacion(JsonDocument estados){
   return val;
 }
 
-JsonDocument readpot() {
+JsonDocument sensores() {
   JsonDocument sensores;
-  int potenciometro1 = analogRead(35);
+  
   JsonArray data = sensores["sensor_1"].to<JsonArray>();
   JsonArray data2= sensores["sensor_2"].to<JsonArray>();
-  data.add(potenciometro1);
-  data.add(35);
-  data2.add(44);
-  data2.add(21);
+  JsonArray data3= sensores["sensor_3"].to<JsonArray>();
+  
+  sensors_event_t humidity1, temp;
+  aht.getEvent(&humidity1, &temp);
+  tempC = (temp.temperature);
+  humidity = (humidity1.relative_humidity);
+  data.add(tempC);
+  data.add(humidity);
+  
+  int MiCS = analogRead(34);
+  data2.add(MiCS);
+  
+  if (ens160.available()){
+    ens160.set_envdata(tempC, humidity);
+    ens160.measure(true);   ens160.measureRaw(true);
+
+    Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
+    data3.add(ens160.getAQI());
+    Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    data3.add(ens160.getTVOC());
+    Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
+    data3.add(ens160.geteCO2());
+  } 
   return sensores;
 }
 
@@ -238,7 +248,18 @@ void setup(){
   ledcSetup(motorBChannel, motorFreq, motorResolution);
   ledcAttachPin(enA, motorAChannel);
   ledcAttachPin(enB, motorBChannel);
-
+  ens160.begin();
+  Serial.println(ens160.available() ? "done." : "failed!");
+  if (ens160.available()) {
+    Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
+    Serial.print("."); Serial.print(ens160.getMinorRev());
+    Serial.print("."); Serial.println(ens160.getBuild());
+    Serial.println(ens160.setMode(ENS160_OPMODE_STD) ? "done." : "failed!");
+  }
+  if (! aht.begin()) {
+    Serial.println("Could not find AHT? Check wiring");
+    while (1) delay(10);
+  }
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
     Serial.println("STA Failed to configure");
@@ -261,7 +282,7 @@ void setup(){
   });
   server.on("/sensores.json", HTTP_GET, [](AsyncWebServerRequest *request){
     String response; 
-    serializeJsonPretty(readpot(), response);
+    serializeJsonPretty(sensores(), response);
     request->send(200, "application/json", response);
   });
   server.on("/RSSI.json", HTTP_GET, [](AsyncWebServerRequest *request){
