@@ -1,29 +1,126 @@
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
+#include "AsyncJson.h"
 #include "ArduinoJson.h"
+#include "ESP32Servo.h"
+#include "Wire.h"
+#include "ScioSense_ENS160.h"
+#include <Adafruit_AHTX0.h>
+
+#define enA 21
+#define in1 19
+#define in2 18
+#define in3 26
+#define in4 27
+#define enB 14
+#define SERVO_PINA 2
+#define Ledbluetooth 23
+
+const int motorFreq = 1000;
+const int motorResolution = 8;
+const int motorAChannel = 3;
+const int motorBChannel = 4;
+int motorAPWM = 0;
+int motorBPWM = 0;
+bool motorDir = true;
+int servoPos = 90;
+int rightX = 0;
+int rightY = 0;
+int leftX;
+int leftY;
+int humidity; 
+int tempC; 
+
+Adafruit_AHTX0 aht;
+ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
 
 // Set your access point network credentials
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
 
 IPAddress remote1_IP(192,168,1,100);
-
+IPAddress remote2_IP(192,168,1,170);
 String nomwifi;
 
 int idmin;
 int deploy  = 0;
-int valorpotencia;
 
 IPAddress local_IP(192, 168, 1, 101);
-
 IPAddress gateway(192, 168, 1, 1);
-
 IPAddress subnet(255, 255, 255, 0);
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
 JsonDocument listamodulos;
+JsonDocument control;
+
+Servo sbrazo;
+
+void notify() {
+  int speedX = (abs(rightX) * 2);
+  int speedY = (abs(rightY) * 2);
+  //Levantamiento del brazo
+  if (leftY < -100) {
+    servoPos = 90;
+    sbrazo.write(servoPos);
+    delay(10);
+  } else {
+      if (leftX < -10 && servoPos < 180) {
+        servoPos++;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
+      if (leftX > 10 && servoPos > 0) {
+        servoPos--;
+        sbrazo.write(servoPos);
+        delay(10);
+        }
+    }
+  if (rightY < 0) {
+    motorDir = true;
+  } else {
+    motorDir = false;
+    }
+
+  if (rightX < -10) {
+    motorAPWM = speedY - speedX;
+    motorBPWM = speedY + speedX;
+  } else if (rightX > 10) {
+      motorAPWM = speedY + speedX;
+      motorBPWM = speedY - speedX;
+    } else {
+      motorAPWM = speedY;
+      motorBPWM = speedY;
+      }
+  motorAPWM = constrain(motorAPWM, 0, 255);
+  motorBPWM = constrain(motorBPWM, 0, 255);
+  moveMotors(motorAPWM, motorBPWM, motorDir);
+
+  Serial.print("X = "); Serial.print(rightX);
+  Serial.print("Y = "); Serial.print(rightY);
+  Serial.print(" / ");
+  Serial.print("Motor A = "); Serial.print(motorAPWM); 
+  Serial.print("Motor B = "); Serial.println(motorBPWM);
+}
+
+void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
+  if (!mtrdir) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+
+  } else {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+  }
+  ledcWrite(motorAChannel, mtrAspeed);
+  ledcWrite(motorBChannel, mtrBspeed);
+}
+
 bool confirmacion(JsonDocument estados){
   bool val;
   for(JsonPair kv : estados.as<JsonObject>()){
@@ -41,15 +138,36 @@ bool confirmacion(JsonDocument estados){
 }
 
 JsonDocument readpot() {
+  sensors_event_t humidity1, temp;
+  aht.getEvent(&humidity1, &temp);
+  tempC = (temp.temperature);
+  humidity = (humidity1.relative_humidity);
+  int MiCS = analogRead(34);
+  Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
+  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
+  Serial.print("MiCS5524: ");    Serial.print(MiCS); Serial.println("\t");
+  if (ens160.available()) {
+    ens160.set_envdata(tempC, humidity);
+    ens160.measure(true);   ens160.measureRaw(true);
+    Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
+    Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
   JsonDocument sensores;
-  int potenciometro1 = analogRead(35);
   JsonArray data = sensores["sensor_1"].to<JsonArray>();
   JsonArray data2= sensores["sensor_2"].to<JsonArray>();
-  data.add(potenciometro1);
-  data.add(35);
-  data2.add(44);
-  data2.add(21);
+  JsonArray data3= sensores["sensor_3"].to<JsonArray>();
+  JsonArray data4= sensores["sensor_4"].to<JsonArray>();
+  data.add(ens160.getAQI());
+  data.add(ens160.getTVOC());
+  data.add(ens160.geteCO2());
+  data2.add(MiCS);
+  data3.add(tempC);
+  data3.add(humidity);
+  data4.add(1);
+  data4.add(2);
+  data4.add(3);
   return sensores;
+}
 }
 
 JsonDocument power(int id, JsonDocument estados){
@@ -72,17 +190,16 @@ JsonDocument power(int id, JsonDocument estados){
     }
     Serial.print("id min:");
     Serial.println(idmin);
-    if(valor<-70 && id == idmin){
+    if(valor<-80 && id == idmin){
       deploy++;
     }
   }
-  else{
+  /*else{
     Serial.println("es el pc el que hace la peticion");
-  }
+  }*/
 
   rssi["despliegue"]  = deploy;
   rssi["rssi"]  = valor;
-  valorpotencia = valor;
   //Serial.println(deploy);
   return rssi;
 }
@@ -106,8 +223,55 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
   return nombre;
 }
 
+void notFound(AsyncWebServerRequest *request) {
+  Serial.println("llegó una petición inesperada");
+  request->send(404, "text/plain", "Not found");
+}
+
+AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/control", [](AsyncWebServerRequest *request, JsonVariant &json) {
+  JsonObject jsonObj = json.as<JsonObject>();
+  Serial.println("llega señal del control");
+  request->send(200,"text/plain", "ok");
+  rightX = jsonObj["rightX"];
+  Serial.print("rightX: ");
+  Serial.println(rightX);
+  rightY = jsonObj["rightY"];
+  Serial.print("rightY: ");
+  Serial.println(rightY);
+  notify();
+  // ...
+});
+
 void setup(){
   Serial.begin(115200);
+  //...
+  ens160.begin();
+  Serial.println(ens160.available() ? "done." : "failed!");
+  if (ens160.available()) {
+    Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
+    Serial.print("."); Serial.print(ens160.getMinorRev());
+    Serial.print("."); Serial.println(ens160.getBuild());
+    Serial.println(ens160.setMode(ENS160_OPMODE_STD) ? "done." : "failed!");
+  }
+  if (! aht.begin()) {
+    Serial.println("Could not find AHT? Check wiring");
+    while (1) delay(10);
+  }
+
+  sbrazo.attach(SERVO_PINA);
+  sbrazo.write(servoPos);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(Ledbluetooth, OUTPUT);
+  ledcSetup(motorAChannel, motorFreq, motorResolution);
+  ledcSetup(motorBChannel, motorFreq, motorResolution);
+  ledcAttachPin(enA, motorAChannel);
+  ledcAttachPin(enB, motorBChannel);
+
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
     Serial.println("STA Failed to configure");
@@ -124,7 +288,7 @@ void setup(){
   Serial.println(nomwifi);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-
+  server.addHandler(handler);
   server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200,"text/plain","1");
   });
@@ -137,7 +301,7 @@ void setup(){
     String response;
     char ip = request->client()->remoteIP().toString()[12];
     int ia = (ip - '0') - 1;
-    if(request->client()->remoteIP()!= remote1_IP){
+    if(request->client()->remoteIP()!= remote1_IP || request->client()->remoteIP()!= remote2_IP){
       //Serial.print("Id del cliente:");
       //Serial.println(ia);
       if(!listamodulos.containsKey(String(ia))){
@@ -161,13 +325,27 @@ void setup(){
     Serial.println(estado);
     listamodulos[identificador] = estado; 
     bool condicion  = confirmacion(listamodulos);
+    request->send(200);
     if (  condicion ==  true ){
       delay(100);
       WiFi.disconnect();
     }  
+  });
+  /*server.on("/control", HTTP_POST, [](AsyncWebServerRequest *request){
+    
+    Serial.println("llega señal del control");
+    Serial.print("el json es:");
+    bool recibecontrol = request->hasParam("body", true);
+    Serial.println(recibecontrol);
+    //deserializeJson(control, recibecontrol);
+    //rightX = control["rightX"];
+    //rightY = control["rightY"];
+    //notify();
     request->send(200);
-});
-DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  });
+  */
+  server.onNotFound(notFound);
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   // Start server
   server.begin();
 }
