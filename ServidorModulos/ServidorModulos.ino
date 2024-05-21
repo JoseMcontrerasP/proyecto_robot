@@ -2,43 +2,67 @@
 #include "ESPAsyncWebServer.h"
 #include "ArduinoJson.h"
 #include "HTTPClient.h"
+#include "ScioSense_ENS160.h"
+#include <Adafruit_AHTX0.h>
+#include <Wire.h>
 
-// Set your access point network credentials
 const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
-
 const char* IPhead  = "http://192.168.1.101/RSSI.json";
 const char* IPpost  = "http://192.168.1.101/estadoModulos";
 int answer = 0;
 int comprobador = 0;
+
+int tempC; 
+int humidity; 
+
+Servo sbrazo;
+Adafruit_AHTX0 aht;
+ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
+//...
+
 bool flag = true;
-
 String nomwifi;
-
-int id = 1;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
+int id = 2;// HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, con el id identificamos que modulo es el que debe prenderse.
 // Create AsyncWebServer object on port 80
 int status = 0;
-
 IPAddress local_IP(192, 168, 1, 101+id);
-
 IPAddress gateway(192, 168, 1, 1);
-
 IPAddress subnet(255, 255, 255, 0);
-
 AsyncWebServer server(80);
 
+
 JsonDocument readpot() {
+  sensors_event_t humidity1, temp;
+  aht.getEvent(&humidity1, &temp);
+  tempC = (temp.temperature);
+  humidity = (humidity1.relative_humidity);
+  int MiCS = analogRead(34);
+  Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
+  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
+  Serial.print("MiCS5524: ");    Serial.print(MiCS); Serial.println("\t");
+  if (ens160.available()) {
+    ens160.set_envdata(tempC, humidity);
+    ens160.measure(true);   ens160.measureRaw(true);
+    Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
+    Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
   JsonDocument sensores;
-  
-  int potenciometro1 = analogRead(35);  
   JsonArray data = sensores["sensor_1"].to<JsonArray>();
   JsonArray data2= sensores["sensor_2"].to<JsonArray>();
-  data.add(potenciometro1);
-  data.add(35);
-  data2.add(44);
-  data2.add(21);
+  JsonArray data3= sensores["sensor_3"].to<JsonArray>();
+  JsonArray data4= sensores["sensor_4"].to<JsonArray>();
+  data.add(ens160.getAQI());
+  data.add(ens160.getTVOC());
+  data.add(ens160.geteCO2());
+  data2.add(MiCS);
+  data3.add(tempC);
+  data3.add(humidity);
+  data4.add(1);
+  data4.add(2);
+  data4.add(3);
   return sensores;
-}
+}}
 
 int getRequest(const char* servername){
   HTTPClient http;
@@ -47,7 +71,7 @@ int getRequest(const char* servername){
   http.begin(servername);
   int resultado;
   int httpResponseCode=http.GET();
-  while(WiFi.status()==WL_CONNECTED){
+  while(WiFi.status() == WL_CONNECTED){
     if(httpResponseCode > 0) {
       if(httpResponseCode == HTTP_CODE_OK) {
         deserializeJson(doc, http.getStream());
@@ -63,9 +87,9 @@ int getRequest(const char* servername){
       }
     }
     else{
-      Serial.println("NO RECIBE RESULTADO");
-      resultado =  -1;
+      Serial.println("intentando de nuevo");
       http.end();
+      resultado = getRequest(servername);
       return resultado;
     }
   }  
@@ -108,9 +132,24 @@ void setup(){
     Serial.println("STA Failed to configure");
   }
   
+  //Configuracion de sensores...
+  ens160.begin();
+  Serial.println(ens160.available() ? "done." : "failed!");
+  if (ens160.available()) {
+    Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
+    Serial.print("."); Serial.print(ens160.getMinorRev());
+    Serial.print("."); Serial.println(ens160.getBuild());
+    Serial.println(ens160.setMode(ENS160_OPMODE_STD) ? "done." : "failed!");
+  }
+  if (! aht.begin()) {
+    Serial.println("Could not find AHT? Check wiring");
+    while (1) delay(10);
+  }
+  Serial.println("AHT20 no detectado");
+  //...
+
   pinMode(32,OUTPUT);//servo union
   pinMode(33, OUTPUT);//switch comunicacion(router)
-  
   digitalWrite(32,HIGH);
   digitalWrite(33,LOW);
 
@@ -133,7 +172,7 @@ void setup(){
 void loop(){  
   if (answer == id){
     while(flag){
-      Serial.println("desconectando modulo de la cola");
+      Serial.println("Desconectando modulo de la cola");
       digitalWrite(32,  LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
       delay(3000);
       
@@ -195,6 +234,7 @@ void loop(){
       Serial.println(WiFi.localIP());
       delay(4000);
     }
+    //aqui colocar el codigo del movimiento.
     comprobador = answer;
     delay(200);  
   }
