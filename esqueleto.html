@@ -12,38 +12,63 @@
 <body>
     <div class="row titulo">
         <div class="row col-4 potencia" >
-            <h3 class="col-5">potencia de la señal</h3>
-            <img alt="figura del wifi" src="/img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg" id="wifi" class="col-4">
-            <p id="dbm" class=" col-4">Aun no se ha inciado el wifi</p>
+            <h3 class="col-5">Potencia de la señal</h3>
+            <img alt="figura del wifi" src="/img/signal_wifi_2_bar_FILL0_wght400_GRAD0_opsz24.svg" id="wifi" class="col-4">
+            <p id="dbm" class=" col-4">Desconectado</p>
         </div>
-        <h1 class="col-8">Pagina principal</h1>
+        <h1 class="col-8">Central Robot</h1>
     </div>
     
-    <div id="linea1" class="row">
+    <button id="demo" class=" btn btn-primary btn-personal" >Desplegar módulo</button> 
+    <div id="linea1" class="row mx-0">
         <img src="http://192.168.1.120:81/stream" alt="" id="video" class="col-6">
         <div id="bloquesitos" class=" row col-6">
-            <div class="modulos col-6" id="Modulo 1">
+            <div class="modulos col-3 ml-3" id="Modulo 1">
                 <h2>Modulo 1</h2>
-                <caption class="sensores"> Sensor numero 1:</caption>
+                <caption class="sensores"> ENS160:</caption>
                 <table>
                     <tr>
-                        <th>NH3</th>
-                        <th>algo2</th>
+                        <th>AQI</th>
+                        <th>TVOC</th>
+                        <th>eCO2</th>
                     </tr>
                     <tr>
                         <td id="valor 110">0</td>
                         <td id="valor 111">0</td>
+                        <td id="valor 112">0</td>
                     </tr>
                 </table>      
-                <caption class="sensores"> Sensor numero 2:</caption>
+                <caption class="sensores"> MiCS:</caption>
                 <table>
                     <tr>
-                        <th>NH3</th>
-                        <th>algo2</th>
+                        <th>Gas desconocido</th>
                     </tr>
                     <tr>
                         <td id="valor 120">0</td>
-                        <td id="valor 121">0</td>
+                    </tr>
+                </table>
+                <caption class="sensores"> AHT2x:</caption>
+                <table>
+                    <tr>
+                        <th>Temperatura</th>
+                        <th>Humedad</th>
+                    </tr>
+                    <tr>
+                        <td id="valor 130">0</td>
+                        <td id="valor 131">0</td>
+                    </tr>
+                </table>
+                <caption class="sensores"> Giroscopio:</caption>
+                <table>
+                    <tr>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Z</th>
+                    </tr>
+                    <tr>
+                        <td id="valor 140">0</td>
+                        <td id="valor 141">0</td>
+                        <td id="valor 142">0</td>
                     </tr>
                 </table>
             </div>
@@ -66,8 +91,7 @@
                 </table>
             </div>
             -->
-    </div>
-    <button id="demo" >boton</button>  
+    </div> 
     <script src="aparecertabla.js"></script>
 </body>
 </html>

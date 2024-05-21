@@ -9,7 +9,7 @@ body {
     padding-top: 2%;
     padding-bottom: 1rem;
     margin-bottom: 1%;
-    background-color: cadetblue;
+    background-color: rgb(60, 100, 101);
     h1{
         padding-left: 10%;
         padding-right: 10%;
@@ -32,27 +32,34 @@ table{
 }
 .modulos {
     overflow: hidden;
-    border: solid 1px   black;
+    border: solid 2px   black;
     border-radius: 6px;
     padding-left: 0%;
     padding-right: 0%;
+    margin-left: 0.1rem;
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
     h2{
+        text-align: center;
         cursor: pointer;
         color: aliceblue;
-        background-color: cadetblue;
+        background-color: rgb(60, 100, 101);
         padding-top: 5px;
         margin-top: 0px;
         margin-bottom: 0px;
         
     }
     .sensores{
-        text-align: left;
-        margin-top: 5px;
-        margin-bottom: 5px;
+        text-align: center;
+        border: solid 2px  black;
+        color: aliceblue;
+        background-color: rgb(97, 176, 179);
+
     }
     th{
+        text-align: center;         
         color: aliceblue;
-        background-color: cadetblue;         
+        background-color: cadetblue;
     }
     td{
         text-align: center;
@@ -69,4 +76,15 @@ table{
         color: aliceblue;
         background-color: cadetblue;    
     }   
+}
+
+.btn-personal{
+    color:black;
+    background-color:aliceblue;
+    border: solid 1px black;
+    margin-left: 1rem;
+}
+
+#demo{
+max-width: 10rem;
 }
