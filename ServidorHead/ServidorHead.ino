@@ -8,12 +8,12 @@
 #include "Adafruit_MPU6050.h"
 #include "Adafruit_Sensor.h"
 
-#define enA 19
-#define in1 18
-#define in2 5
-#define in3 26
-#define in4 27
-#define enB 14
+#define enA 23
+#define in1 19
+#define in2 18
+#define in3 5
+#define in4 17
+#define enB 16
 #define SERVO_PINA 2
 #define Ledbluetooth 23
 
@@ -426,14 +426,20 @@ void setup(){
     String response;
     JsonDocument datosBrazo;
     int variableLocal1;//Que union se selecciona |||UNA VEZ LISTO HAY QUE CAMBIARLE LOS NOMBRES|||
-    int variableLocal2;//posicion del servo eje X osea la señal rightX
-    int variableLocal3;//posicion del servo eje Y osea la señal rightY
+    int variableLocal2;//posicion del servo eje x osea la señal rightX
+    int variableLocal3;//posicion del servo eje x osea la señal rightY
+    int variableLocal4;//posicion del servo eje z osea la señal UP
+    int variableLocal5;//posicion del servo eje z osea la señal DOWN
     variableLocal1  = brazoStatus;//esto probablemente se pueda borrar pero lo dejó asi porque primero que sea funcional
     variableLocal2  = rightX;
     variableLocal3  = rightY;
+    variableLocal4  = UP;
+    variableLocal5  = DOWN;
     datosBrazo["brazostatus"] = variableLocal1;
     datosBrazo["X"] = variableLocal2;
     datosBrazo["Y"] = variableLocal3;
+    datosBrazo["Zu"] = variableLocal3;
+    datosBrazo["Zd"] = variableLocal3;
     serializeJsonPretty(datosBrazo,response);
     request->send(200, "application/json", response);
   });
