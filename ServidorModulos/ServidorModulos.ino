@@ -15,9 +15,9 @@
 #define in3 5
 #define in4 17
 #define enB 16
-#define SERVO_PINA 17
-#define SERVO_PINB 16
-#define PIN_ACOPLE 2
+#define SERVO_PINA 6
+#define SERVO_PINB 7
+#define PIN_ACOPLE 8
 
 int id = 1;/* HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, 
               con el id identificamos que modulo es el que debe prenderse.                 */
@@ -49,18 +49,21 @@ bool flag = true;
 String nomwifi;
 
 int xservoPos = 90;
+int zservoPos = 90;
 Servo xbrazo;
 Servo zbrazo;
 Servo acople;
 
 int humidity; 
-int tempC; 
+int tempC;
 Adafruit_MPU6050 mpu;
 Adafruit_AHTX0 aht;
 ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
 int status = 0;
 int rightY;
 int rightX;
+int UP;
+int DOWN;
 
 AsyncWebServer server(80);
 
@@ -253,6 +256,15 @@ void movBrazo(){
       delay(10);
     }
   }
+  if (UP  ==  1) {
+    zbrazo.write(145);
+    delay(10);
+  } 
+  if (DOWN == 1) {
+    zbrazo.write(90);
+    delay(10);
+  }
+  if (UP==1){Serial.print("ok");}
 }
 
 void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
@@ -359,7 +371,7 @@ void setup(){
   xbrazo.attach(SERVO_PINA);
   xbrazo.write(xservoPos);
   zbrazo.attach(SERVO_PINB);
-  zbrazo.write(xservoPos);
+  zbrazo.write(zservoPos);
   acople.attach(PIN_ACOPLE);
   acople.write(90);
   pinMode(32,OUTPUT); //LED indicador de acople 
@@ -480,7 +492,9 @@ void loop(){
     JsonDocument algo =  getRequestBrazo(IPbrazo);
     if(algo["brazostatus"]  ==  id){
       rightY=algo["Y"];
-      rightX=algo["X"];
+      rightX=algo["X"];      
+      UP=algo["Zu"];
+      DOWN=algo["Zd"];
       movBrazo();
     }
     delay(200);  
