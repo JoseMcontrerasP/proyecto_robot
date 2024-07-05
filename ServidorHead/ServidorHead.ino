@@ -40,6 +40,7 @@ IPAddress remote2_IP(192,168,1,170);
 String nomwifi;
 
  int rightX; int rightY;
+ int UP; int DOWN;
 
 int idmin;
 int idmax;
@@ -82,6 +83,11 @@ void notify(int R1,int L1) {
     motorBPWM = 255;
   }
   else if(R1  ==  0 && L1 ==  0) {
+    motorDir = true;
+    motorAPWM = 0;
+    motorBPWM = 0;
+  }
+  else if(R1  ==  1 && L1 ==  1) {
     motorDir = true;
     motorAPWM = 0;
     motorBPWM = 0;
@@ -438,8 +444,8 @@ void setup(){
     datosBrazo["brazostatus"] = variableLocal1;
     datosBrazo["X"] = variableLocal2;
     datosBrazo["Y"] = variableLocal3;
-    datosBrazo["Zu"] = variableLocal3;
-    datosBrazo["Zd"] = variableLocal3;
+    datosBrazo["Zu"] = variableLocal4;
+    datosBrazo["Zd"] = variableLocal5;
     serializeJsonPretty(datosBrazo,response);
     request->send(200, "application/json", response);
   });
