@@ -7,27 +7,29 @@
 #include <Adafruit_AHTX0.h>
 #include "Adafruit_MPU6050.h"
 #include "Adafruit_Sensor.h"
+#include <TB6612_ESP32.h>
 
-#define enA 23
-#define in1 19
-#define in2 18
-#define in3 5
-#define in4 17
-#define enB 16
 #define SERVO_PINA 2
-#define Ledbluetooth 23
 
-const int motorFreq = 1000;
-const int motorResolution = 8;
-const int motorAChannel = 3;
-const int motorBChannel = 4;
-int motorAPWM;
-int motorBPWM;
+#define AIN1 19 // ESP32 Pin D13 to TB6612FNG Pin AIN1
+#define BIN1 5 // ESP32 Pin D12 to TB6612FNG Pin BIN1
+#define AIN2 18 // ESP32 Pin D14 to TB6612FNG Pin AIN2
+#define BIN2 17 // ESP32 Pin D27 to TB6612FNG Pin BIN2
+#define PWMA 23 // ESP32 Pin D26 to TB6612FNG Pin PWMA
+#define PWMB 16 // ESP32 Pin D25 to TB6612FNG Pin PWMB
+#define STBY 33 // ESP32 Pin D33 to TB6612FNG Pin STBY
+
+const int offsetA = 1;
+const int offsetB = 1;
+
+Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
+Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
+
 int brazoStatus =1;
-bool motorDir = true;
 int movStatus;
 int humidity; 
 int tempC; 
+
 Adafruit_MPU6050 mpu;
 Adafruit_AHTX0 aht;
 ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
@@ -39,8 +41,9 @@ IPAddress remote1_IP(192,168,1,100);
 IPAddress remote2_IP(192,168,1,170);
 String nomwifi;
 
- int rightX; int rightY;
- int UP; int DOWN;
+int rightX; int rightY;
+int UP; int DOWN;
+int R1; int L1;
 
 int idmin;
 int idmax;
@@ -72,51 +75,22 @@ void conectaWifi(){
     Serial.println(WiFi.localIP());
 }
 void notify(int R1,int L1) {
-  if (L1  ==  1) {
-    motorDir = false;
-    motorAPWM = 255;
-    motorBPWM = 255;
+  while (L1  ==  1) {
+    back(motor1, motor2, -255);         // Reverse Motor 1 and Motor 2 for 1 seconds at full speed
   } 
-  else if (R1 == 1) {
-    motorDir = true;
-    motorAPWM = 255;
-    motorBPWM = 255;
+  while (R1 == 1) {
+    forward(motor1, motor2, 255);
+    Serial.print("Avanzaln");
   }
-  else if(R1  ==  0 && L1 ==  0) {
-    motorDir = true;
-    motorAPWM = 0;
-    motorBPWM = 0;
+  while (R1  ==  0 && L1 ==  0) {
+    brake(motor1, motor2);
   }
-  else if(R1  ==  1 && L1 ==  1) {
-    motorDir = true;
-    motorAPWM = 0;
-    motorBPWM = 0;
+  while(R1  ==  1 && L1 ==  1) {
+    brake(motor1, motor2);
   }
-  moveMotors(motorAPWM, motorBPWM, motorDir);
-  Serial.print("Motor A = "); Serial.print(motorAPWM); 
-  Serial.print("Motor B = "); Serial.println(motorBPWM);
 } 
-void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
-  if (!mtrdir) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
-    movStatus =  0;
-  } 
-  else{
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-    movStatus =  1;
-  }
-  if(mtrAspeed  ==  0){ // si no funciona reemplazar por if mtrAspeed==0;
-    movStatus=-1;
-  }
-  ledcWrite(motorAChannel, mtrAspeed);
-  ledcWrite(motorBChannel, mtrBspeed);
-}
+
+
 bool confirmacion(JsonDocument estados){
   bool val;
   for(JsonPair kv : estados.as<JsonObject>()){
@@ -352,17 +326,6 @@ void setup(){
       Serial.println("5 Hz");
       break;
   }
-
-  pinMode(enA, OUTPUT);
-  pinMode(enB, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
-  ledcSetup(motorAChannel, motorFreq, motorResolution);
-  ledcSetup(motorBChannel, motorFreq, motorResolution);
-  ledcAttachPin(enA, motorAChannel);
-  ledcAttachPin(enB, motorBChannel);
 
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
