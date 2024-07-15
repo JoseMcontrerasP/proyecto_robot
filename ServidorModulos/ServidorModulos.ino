@@ -8,26 +8,29 @@
 #include <Adafruit_AHTX0.h>
 #include "Adafruit_MPU6050.h"
 #include "Adafruit_Sensor.h"
+#include <TB6612_ESP32.h>
 
-#define enA 23
-#define in1 19
-#define in2 18
-#define in3 5
-#define in4 17
-#define enB 16
+#define AIN1 19
+#define BIN1 5
+#define AIN2 18
+#define BIN2 17
+#define PWMA 23
+#define PWMB 16
+#define STBY 33
+
+const int offsetA = 1;
+const int offsetB = 1;
+
+Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
+Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
+
 #define SERVO_PINA 6
 #define SERVO_PINB 7
 #define PIN_ACOPLE 8
 
 int id = 1;/* HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, 
               con el id identificamos que modulo es el que debe prenderse.                 */
-const int motorFreq = 1000;
-const int motorResolution = 8;
-const int motorAChannel = 3;
-const int motorBChannel = 4;
-int motorAPWM = 0;
-int motorBPWM = 0;
-bool motorDir = true;
+
 
 // Set your access point network credentials
 const char* ssid     = "ESP1";
@@ -265,25 +268,16 @@ void movBrazo(){
     delay(10);
   }
   if (UP==1){Serial.print("ok");}
-}
+  }
 
-void moveMotors(int mtrAspeed, int mtrBspeed, bool mtrdir) {
+void moveMotors(bool mtrdir) {
   if (!mtrdir) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
+    back(motor1, motor2, -255);
   } 
   else {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
+    forward(motor1, motor2, 255);
   }
-  ledcWrite(motorAChannel, mtrAspeed);
-  ledcWrite(motorBChannel, mtrBspeed);
 }
-
 
 void setup(){
   //Puerto Serial
@@ -379,17 +373,6 @@ void setup(){
   //La señal para el switch de comunicación
   pinMode(33, OUTPUT);//switch comunicacion(router) 
   digitalWrite(33,LOW);
-  //Motores DC
-  pinMode(enA, OUTPUT);
-  pinMode(enB, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
-  ledcSetup(motorAChannel, motorFreq, motorResolution);
-  ledcSetup(motorBChannel, motorFreq, motorResolution);
-  ledcAttachPin(enA, motorAChannel);
-  ledcAttachPin(enB, motorBChannel);
   //configuración del WIFi
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -478,17 +461,17 @@ void loop(){
       Serial.println(WiFi.localIP());
       delay(4000);
     }
+
     //aqui colocar el codigo del movimiento.
     comprobador = answer;
     int mov = getRequestMov(IPmov);
     if( mov !=  -1){
-      motorAPWM =  255;
-      motorBPWM =  255;
-      moveMotors(motorAPWM,motorBPWM,mov);
+      moveMotors(mov);
     }
     else{
-      moveMotors(0,0,mov);
+      brake(motor1, motor2);
     }
+    
     JsonDocument algo =  getRequestBrazo(IPbrazo);
     if(algo["brazostatus"]  ==  id){
       rightY=algo["Y"];
