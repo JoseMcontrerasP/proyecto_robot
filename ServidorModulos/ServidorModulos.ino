@@ -24,8 +24,8 @@ const int offsetB = 1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
 
-#define SERVO_PINA 6
-#define SERVO_PINB 7
+#define SERVO_PINA 7
+#define SERVO_PINB 13
 #define PIN_ACOPLE 8
 
 int id = 1;/* HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, 
