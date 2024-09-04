@@ -26,6 +26,13 @@ body {
     }
 }
 
+  
+  /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+  .active, .collapsible:hover {
+    background-color:rgb(67, 112, 113);
+  }
+  
+
 table{
     border-collapse: collapse; 
     max-width: fit-content; 
@@ -36,6 +43,8 @@ table{
     border-radius: 6px;
     padding-left: 0%;
     padding-right: 0%;
+    height: fit-content;
+    
     h2{
         cursor: pointer;
         color: aliceblue;
@@ -45,10 +54,11 @@ table{
         margin-bottom: 0px;
         
     }
-    .sensores{
+    .sensores{ 
         text-align: left;
         margin-top: 5px;
         margin-bottom: 5px;
+        display: block;
     }
     th{
         color: aliceblue;
@@ -60,13 +70,24 @@ table{
     }
 }
 
-.configuracion{
-    border: solid 1px black;
-    border-radius: 6px;
+#todo_modulos{
+    border:solid 1px black;
+    border-radius: 16px;
     overflow: hidden;
-    max-width: fit-content;
-    caption{
-        color: aliceblue;
-        background-color: cadetblue;    
-    }   
+    margin: 2%;
+   h3,h4,#m1,#m2,#m3{
+    text-align: center;
+   }
+   #centro,#titulos{
+    background-color: cadetblue;
+    color: white;
+   }
+   #status{
+    background-color: white;
+   }
+}
+#video{
+    display: block;
+    margin: auto;
+    margin-bottom: 2%;
 }

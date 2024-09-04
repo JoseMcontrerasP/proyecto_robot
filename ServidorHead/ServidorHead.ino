@@ -25,11 +25,12 @@ const int offsetB = 1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
 
-int brazoStatus =1;
-int movStatus=-1;
+int brazoStatus = 1;
+int movStatus = -1;
 int humidity; 
 int tempC; 
-
+int timeout = 5;
+int previo;
 Adafruit_MPU6050 mpu;
 Adafruit_AHTX0 aht;
 ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
@@ -76,12 +77,13 @@ void conectaWifi(){
 }
 void notify(int R1,int L1) {
   while (L1  ==  1) {
-    forward(motor1, motor2, -255);         
-    movStatus=0;
+    back(motor1, motor2, -255);         // Reverse Motor 1 and Motor 2 for 1 seconds at full speed
+    movStatus=1;
   } 
   while (R1 == 1) {
     forward(motor1, motor2, 255);
-    movStatus=1;
+    movStatus=0;
+    Serial.print("Avanzaln");
   }
   while (R1  ==  0 && L1 ==  0) {
     brake(motor1, motor2);
@@ -89,7 +91,6 @@ void notify(int R1,int L1) {
   }
   while(R1  ==  1 && L1 ==  1) {
     brake(motor1, motor2);
-    movStatus=-1;
   }
 } 
 
@@ -118,24 +119,24 @@ JsonDocument leerSensores() {
   JsonArray data3= sensores["sensor_3"].to<JsonArray>();
   JsonArray data4= sensores["sensor_4"].to<JsonArray>();
   
-  /*aht.getEvent(&humidity1, &temp);
+  aht.getEvent(&humidity1, &temp);
   tempC = (temp.temperature);
-  humidity = (humidity1.relative_humidity);*/
+  humidity = (humidity1.relative_humidity);
   int MiCS = analogRead(34);
   
   //AHT2X
-  /*Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
-  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");*/
+  Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
+  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
   //MiCS5524
   Serial.print("MiCS5524: ");    Serial.print(MiCS); Serial.println("\t");
   //ens160
- /* if (ens160.available()) {
+  if (ens160.available()) {
     ens160.set_envdata(tempC, humidity);
     ens160.measure(true);   ens160.measureRaw(true);
     Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
     Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
     Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
-  }*/
+  }
   //MPU6050
   mpu.getEvent(&a, &g, &temp);
   Serial.print("Aceleración: ");
@@ -164,8 +165,10 @@ JsonDocument leerSensores() {
 JsonDocument power(int id, JsonDocument estados){
   JsonDocument rssi;
   int valor=WiFi.RSSI();
+
   if(id !=  0){
     //Serial.println("no es el pc el que hace la peticion");
+
     idmin = id;
     idmax = id;
     //Serial.print("id del cliente: ");
@@ -185,8 +188,13 @@ JsonDocument power(int id, JsonDocument estados){
     }
     Serial.print("id min:");
     Serial.println(idmin);
-    if(valor<-80 && id == idmin){
-      deploy++;
+    if(valor<-80){
+      previo++;
+      if(id == idmin && previo >= timeout){
+        previo  = 0;
+        deploy++;
+    
+      }
     }
   }
   /*else{
@@ -244,13 +252,12 @@ AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/control
       brazoStatus++;
     }
   }
-  
   notify(R1,L1);
 });
 
 void setup(){
   Serial.begin(115200);
-  /*ens160.begin();
+  ens160.begin();
   Serial.println(ens160.available() ? "done." : "failed!");
   if (ens160.available()) {
     Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
@@ -262,7 +269,7 @@ void setup(){
     Serial.println("Could not find AHT? Check wiring");
     while (1) delay(10);
     Serial.println("AHT20 no detectado");
-  }*/
+  }
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1) {

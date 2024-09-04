@@ -16,58 +16,76 @@
             <img alt="figura del wifi" src="/img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg" id="wifi" class="col-4">
             <p id="dbm" class=" col-4">Aun no se ha inciado el wifi</p>
         </div>
-        <h1 class="col-8">Pagina principal</h1>
+        <h1 class="col-6">Centro de Control</h1>
+        <div class="col">
+            <button class= "col" id="iniciar">Inicio Robot</button>
+            <button class= "col" id="parar">Finalizar</button>
+        </div>    
     </div>
-    
     <div id="linea1" class="row">
-        <img src="http://192.168.1.120:81/stream" alt="" id="video" class="col-6">
-        <div id="bloquesitos" class=" row col-6">
-            <div class="modulos col-6" id="Modulo 1">
-                <h2>Modulo 1</h2>
-                <caption class="sensores"> Sensor numero 1:</caption>
-                <table>
-                    <tr>
-                        <th>NH3</th>
-                        <th>algo2</th>
-                    </tr>
-                    <tr>
-                        <td id="valor 110">0</td>
-                        <td id="valor 111">0</td>
-                    </tr>
-                </table>      
-                <caption class="sensores"> Sensor numero 2:</caption>
-                <table>
-                    <tr>
-                        <th>NH3</th>
-                        <th>algo2</th>
-                    </tr>
-                    <tr>
-                        <td id="valor 120">0</td>
-                        <td id="valor 121">0</td>
-                    </tr>
-                </table>
+        <div class="row">
+            <div class="col-6">
+                <img src="img\640x480.jpg" alt="" id="video" class="row">
+                <div class="row" id="todo_modulos">
+                    <div class="col">
+                        <div class="row" id="centro"><h3>Estado de despliegue de los modulos</h3></div>
+                        <div class="row" id="titulos">
+                            <div class="col">
+                                <h4> Cabeza</h4>
+                            </div>
+                            <div class="col">
+                                <h4> Modulo 1</h4>
+                            </div>
+                            <div class="col">
+                                <h4> Modulo 2</h4>
+                            </div>
+                        </div>
+                        <div class="row" id="status">
+                            <div class="col" id="m1">
+                                No desplegado
+                            </div>
+                            <div class="col" id="m2">
+                                No desplegado
+                            </div>
+                            <div class="col"id="m3">
+                                No desplegado
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="bloquesitos" class="col-6 row">
+                <div class="modulos col-6" id="Modulo 1">
+                    <h2 class="collapsible">Cabeza</h2>
+                    <div>
+                        <p class="sensores"> Sensor numero 1:</p>
+                        <table>
+                            <tr>
+                                <th>NH3</th>
+                                <th>algo2</th>
+                            </tr>
+                            <tr>
+                                <td id="valor 110">0</td>
+                                <td id="valor 111">0</td>
+                            </tr>
+                        </table>      
+                        <p class="sensores"> Sensor numero 2:</p>
+                        <table>
+                            <tr>
+                                <th>NH3</th>
+                                <th>algo2</th>
+                            </tr>
+                            <tr>
+                                <td id="valor 120">0</td>
+                                <td id="valor 121">0</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>       
-        <!--<div class="configuracion">
-                <table>
-                    <caption> Configuración </caption>
-                    <tr>
-                        <td>opcion 1</td>
-                        <td><input type="button" value="OK"></td>
-                    </tr>
-                    <tr>
-                        <td>opcion 2</td>
-                        <td><input type="button" value="OK"></td>
-                    </tr>
-                    <tr>
-                        <td>opcion 3</td>
-                        <td><input type="button" value="OK"></td>
-                    </tr>
-                </table>
-            </div>
-            -->
+        <button class= "col" id="demo">demo</button>
     </div>
-    <button id="demo" >boton</button>  
     <script src="aparecertabla.js"></script>
 </body>
 </html>

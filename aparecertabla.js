@@ -13,15 +13,24 @@ function creartabla(){
     clone.id="Modulo " + numeroid; 
 
     document.getElementById("bloquesitos").appendChild(clone);
-    document.getElementById(clone.id).children[0].innerHTML=clone.id;
+    document.getElementById(clone.id).children[0].innerHTML="Modulo "+(numeroid-1);
 
-    let ztable = document.getElementById(clone.id).children;
+    let medio = document.getElementById(clone.id).children;
+    let ztable = medio[1].children;
+    console.log(ztable.length);
     for(let i = 1;i<(ztable.length);i++){
-        let row = ztable[i].children[0].children[1];
-        for(let r=0;r<row.childElementCount;r++){
-            row.children[r].id="valor "+ numeroid +i+r;
-            row.children[r].innerHTML="0";   
-        }  
+        if(ztable[i].nodeName == "TABLE"){
+            let row = ztable[i].children[0].children[1];
+            for(let r=0;r<row.childElementCount;r++){
+                if(i>1){
+                    row.children[r].id="valor "+ numeroid +(i-1)+r;
+                       
+                }else{
+                    row.children[r].id="valor "+ numeroid +i+r;   
+                }
+                row.children[r].innerHTML="0";
+            }  
+        }
     }  
 }
 
@@ -81,8 +90,9 @@ async function wifi(){
 
 function main(){
     wifi();
+    
     //document.getElementById("video").src="http://192.168.1.120:81/stream";
-    for(let p=1; p<4;p++){ // el 4 es el numero de modulos a evaluer
+    for(let p=1; p<3;p++){ // el 4 es el numero de modulos a evaluer
         let abo = AbortSignal.timeout(1000);
         let url = 'http://192.168.1.10'+p+'/ping';
         fetch(url,{signal: abo })
@@ -92,21 +102,51 @@ function main(){
                         creartabla();
                     }else{
                         recibirsensores(p);
+                        if(document.getElementById("m"+p)==="1"){
+                            document.getElementById("m"+p).innerHTML="robot en movimiento";
+                        }
+                        else{
+                            document.getElementById("m"+p).innerHTML="Desplegado";
+                        }
                     }
                 }
-                else{
+                else{                    
                     //console.log("la respuesta del servidor no fue 200");
                 }
             })
             .catch(function(error){
+                document.getElementById("m"+p).innerHTML="No desplegado";
                 //console.log("no hay conexion con el servidor"+p);
             });
     }    
 }
-function camara(){
-    window.onload = document.getElementById("video").src = "http://192.168.1.120:81/stream";
-}
 
+function abrir(){
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        });
+    } 
+}
+function iniciar(){
+    intervalid=setInterval(main,1000);
+    document.getElementById("video").src="http://192.168.1.120:81/stream";
+}
+function parar(){
+    clearInterval(intervalid);
+}
+let intervalid;
 document.getElementById("demo").addEventListener("click", creartabla);
-//setInterval(camara,200);
-setInterval(main,1000); 
+document.getElementById("iniciar").addEventListener("click",iniciar);
+document.getElementById("parar").addEventListener("click",parar);
+
+
+setInterval(abrir,10);
