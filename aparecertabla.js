@@ -5,6 +5,11 @@ function numids(){
     numero++;
     return numero;
 }
+function nameid(str,index,char){
+    const array = str.split('');
+    array[index] = char;
+    return array.join('');
+}
 
 function creartabla(){
     const node  =   document.getElementById("Modulo 1");
@@ -17,18 +22,16 @@ function creartabla(){
 
     let medio = document.getElementById(clone.id).children;
     let ztable = medio[1].children;
-    console.log(ztable.length);
+    
     for(let i = 1;i<(ztable.length);i++){
         if(ztable[i].nodeName == "TABLE"){
             let row = ztable[i].children[0].children[1];
             for(let r=0;r<row.childElementCount;r++){
-                if(i>1){
-                    row.children[r].id="valor "+ numeroid +(i-1)+r;
-                       
-                }else{
-                    row.children[r].id="valor "+ numeroid +i+r;   
-                }
-                row.children[r].innerHTML="0";
+                let tieneid = row.children[r].hasAttribute("id");
+                if (typeof row.children[r].id === "string" && row.children[r].id.length !== 0) {
+                    row.children[r].id  = nameid(row.children[r].id,6,numeroid);
+                    row.children[r].innerHTML   =   "0";
+                  }
             }  
         }
     }  
