@@ -79,24 +79,24 @@ JsonDocument leerSensores() {
   JsonArray data3= sensores["sensor_3"].to<JsonArray>();
   JsonArray data4= sensores["sensor_4"].to<JsonArray>();
   
-  /*aht.getEvent(&humidity1, &temp);
+  aht.getEvent(&humidity1, &temp);
   tempC = (temp.temperature);
-  humidity = (humidity1.relative_humidity);*/
+  humidity = (humidity1.relative_humidity);
   int MiCS = analogRead(34);
   
   //AHT2X
-  /*Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
-  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");*/
+  Serial.print("Temperatura: "); Serial.print(tempC); Serial.print("°"); Serial.print("\t");
+  Serial.print("Humedad: ");     Serial.print(humidity); Serial.print("% rH "); Serial.print("\t");
   //MiCS5524
   Serial.print("MiCS5524: ");    Serial.print(MiCS); Serial.println("\t");
   //ens160
-  /*if (ens160.available()) {
+  if (ens160.available()) {
     ens160.set_envdata(tempC, humidity);
     ens160.measure(true);   ens160.measureRaw(true);
     Serial.print("AQI: ");  Serial.print(ens160.getAQI());Serial.print("\t");
     Serial.print("TVOC: "); Serial.print(ens160.getTVOC());Serial.print("ppb\t");
     Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
-  }*/
+  }
   //MPU6050
   mpu.getEvent(&a, &g, &temp);
   Serial.print("Aceleración: ");
@@ -111,12 +111,12 @@ JsonDocument leerSensores() {
   Serial.println(" [rad/s]");
   Serial.print("Temperatura: "); Serial.print(temp.temperature); Serial.println(" [C]");
   //Documento Json
-  /*data.add(ens160.getAQI());
+  data.add(ens160.getAQI());
   data.add(ens160.getTVOC());
-  data.add(ens160.geteCO2());*/
+  data.add(ens160.geteCO2());
   data2.add(MiCS);
   data3.add(temp.temperature);
-  //data3.add(humidity);
+  data3.add(humidity);
   data4.add(g.gyro.x);
   data4.add(g.gyro.y);
   data4.add(g.gyro.z);
@@ -280,7 +280,7 @@ void setup(){
   //Puerto Serial
   Serial.begin(115200); 
   //Sensores
-  /*ens160.begin();
+  ens160.begin();
   Serial.println(ens160.available() ? "done." : "failed!");
   if (ens160.available()) {
     Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
@@ -292,7 +292,7 @@ void setup(){
     Serial.println("Could not find AHT? Check wiring");
     while (1) delay(10);
     Serial.println("AHT20 no detectado");
-  }*/
+  }
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1) {
@@ -365,11 +365,9 @@ void setup(){
   zbrazo.write(zservoPos);
   acople.attach(PIN_ACOPLE);
   acople.write(90);
-  pinMode(32,OUTPUT); //LED indicador de acople 
-  digitalWrite(32,HIGH);
-  //La señal para el switch de comunicación
-  //pinMode(33, OUTPUT);//switch comunicacion(router) 
-  //digitalWrite(33,LOW);
+  pinMode(32,OUTPUT);
+  digitalWrite(32,LOW);
+
   //configuración del WIFi
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -396,12 +394,10 @@ void loop(){
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
-      digitalWrite(32,  LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
       acople.write(120);
       delay(3000);//tiempo para que se desenganche.
-      
       Serial.println("Prendiendo nuevo modulo de conexión");
-      digitalWrite(33,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      digitalWrite(32,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       delay(3000);
       status = answer;
       postRequest(IPpost, id, status);

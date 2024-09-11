@@ -76,20 +76,20 @@ void conectaWifi(){
     Serial.println(WiFi.localIP());
 }
 void notify(int R1,int L1) {
-  while (L1  ==  1) {
+  if (L1  ==  1) {
     back(motor1, motor2, -255);         // Reverse Motor 1 and Motor 2 for 1 seconds at full speed
     movStatus=1;
   } 
-  while (R1 == 1) {
+  if (R1 == 1) {
     forward(motor1, motor2, 255);
     movStatus=0;
     Serial.print("Avanzaln");
   }
-  while (R1  ==  0 && L1 ==  0) {
+  if (R1  ==  0 && L1 ==  0) {
     brake(motor1, motor2);
     movStatus=-1;
   }
-  while(R1  ==  1 && L1 ==  1) {
+  if (R1  ==  1 && L1 ==  1) {
     brake(motor1, motor2);
   }
 } 
