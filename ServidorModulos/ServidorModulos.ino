@@ -51,8 +51,8 @@ bool flag = true;
 
 String nomwifi;
 
-int xservoPos = 90;
-int zservoPos = 90;
+int xservoPos = 89;
+int zservoPos = 135;
 Servo xbrazo;
 Servo zbrazo;
 Servo acople;
@@ -280,7 +280,7 @@ void setup(){
   //Puerto Serial
   Serial.begin(115200); 
   //Sensores
-  ens160.begin();
+  /*ens160.begin();
   Serial.println(ens160.available() ? "done." : "failed!");
   if (ens160.available()) {
     Serial.print("\tRev: "); Serial.print(ens160.getMajorRev());
@@ -364,10 +364,12 @@ void setup(){
   zbrazo.attach(SERVO_PINB);
   zbrazo.write(zservoPos);
   acople.attach(PIN_ACOPLE);
-  acople.write(90);
-  pinMode(32,OUTPUT);
-  digitalWrite(32,LOW);
-
+  acople.write(120);
+  pinMode(32,OUTPUT); //LED indicador de acople 
+  digitalWrite(32,HIGH);
+  //La señal para el switch de comunicación
+  //pinMode(33, OUTPUT);//switch comunicacion(router) 
+  //digitalWrite(33,LOW);
   //configuración del WIFi
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -394,10 +396,12 @@ void loop(){
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
-      acople.write(120);
+      digitalWrite(32,  LOW);// esto debería hace que el servo o stepper que haga de gancho se desenganche.
+      acople.write(90);
       delay(3000);//tiempo para que se desenganche.
+      
       Serial.println("Prendiendo nuevo modulo de conexión");
-      digitalWrite(32,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      digitalWrite(33,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       delay(3000);
       status = answer;
       postRequest(IPpost, id, status);
@@ -473,6 +477,6 @@ void loop(){
       DOWN=algo["Zd"];
       movBrazo();
     }
-    delay(100);  
+    delay(10);  
   }
 }
