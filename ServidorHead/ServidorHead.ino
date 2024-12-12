@@ -85,16 +85,29 @@ void notify(int R1,int L1) {
   if (L1  ==  1) {
     forward(motor1, motor2, -255);         
     movStatus=0;
+    if(WiFi.SSID()=="ESP1"/*ESTe debe ser el ultimo modulo posible*/){
+      if(LEFT == 1){
+        left(motor1,motor2,-255);
+      }
+      else if(RIGHT ==  1){
+        right(motor1,motor2,-255);
+      }
+    }
   } 
-  if (R1 == 1) {
+  else if (R1 == 1) {
     forward(motor1, motor2, 255);
     movStatus=1;
+    if(WiFi.SSID()=="ESP1"/*ESTe debe ser el ultimo modulo posible*/){
+      
+      if(LEFT == 1){
+        left(motor1,motor2,255);
+      }
+      else if(RIGHT ==  1){
+        right(motor1,motor2,255);
+      }
+    }
   }
-  if (R1  ==  0 && L1 ==  0) {
-    brake(motor1, motor2);
-    movStatus=-1;
-  }
-  if (R1  ==  1 && L1 ==  1) {
+  if (R1  ==  0 && L1 ==  0 || R1  ==  1 && L1 ==  1) {
     brake(motor1, motor2);
     movStatus=-1;
   }
