@@ -65,6 +65,7 @@ char packetBuffer[255];
 unsigned int localPort = 4444;
 unsigned int localPort2 = 4445;
 
+
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
@@ -113,7 +114,6 @@ void notify(int R1,int L1) {
     brake(motor1, motor2);
     movStatus=-1;
   }
-
 } 
 
 
@@ -187,7 +187,6 @@ JsonDocument leerSensores() {
 JsonDocument power(int id, JsonDocument estados){
   JsonDocument rssi;
   int valor=WiFi.RSSI();
-
   if(id !=  0){
 //Serial.println("no es el pc el que hace la peticion");
 
@@ -413,8 +412,8 @@ void setup(){
     String response;
     JsonDocument datosBrazo;
     datosBrazo["brazostatus"] = brazoStatus;
-    datosBrazo["Y"] = rightY;
-    datosBrazo["X"] = rightX;
+    datosBrazo["X"] = rightY;
+    datosBrazo["Y"] = rightX;
     datosBrazo["Zu"] = UP;
     datosBrazo["Zd"] = DOWN;
     serializeJsonPretty(datosBrazo,response);

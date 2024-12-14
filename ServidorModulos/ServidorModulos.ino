@@ -54,8 +54,8 @@ bool flag = true;
 
 String nomwifi;
 
-int xservoPos = 90;
-int zservoPos = 90;
+int xservoPos = 89;
+int zservoPos = 135;
 Servo xbrazo;
 Servo zbrazo;
 Servo acople;
@@ -408,8 +408,9 @@ void loop(){
       Serial.println("desconectando modulo de la cola");
       acople.write(90);
       delay(3000);//tiempo para que se desenganche.
+      
       Serial.println("Prendiendo nuevo modulo de conexión");
-      digitalWrite(32,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      digitalWrite(33,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       delay(3000);
       status = answer;
       postRequest(IPpost, id, status);
