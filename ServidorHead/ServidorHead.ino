@@ -1,4 +1,5 @@
 #include "WiFi.h"
+#include "WiFiUdp.h"
 #include "ESPAsyncWebServer.h"
 #include "AsyncJson.h"
 #include "ArduinoJson.h"
@@ -25,12 +26,11 @@ const int offsetB = 1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
 
-int brazoStatus = 1;
-int movStatus = -1;
+int brazoStatus =1;
+int movStatus=-1;
 int humidity; 
 int tempC; 
-int timeout = 5;
-int previo;
+
 Adafruit_MPU6050 mpu;
 Adafruit_AHTX0 aht;
 ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
@@ -42,20 +42,28 @@ IPAddress remote1_IP(192,168,1,100);
 IPAddress remote2_IP(192,168,1,170);
 String nomwifi;
 
-int rightX; int rightY;
-int UP; int DOWN;
-int R1; int L1;
+int leftX; int leftY; int rightX; int rightY;
+int R1; int L1; int R2; int L2;
+int UP; int DOWN; int RIGHT; int LEFT;
+int X; int O; int T; int S;
 
 int idmin;
 int idmax;
 int deploy  = 0;
 int valorpotencia;
-
+unsigned long anterior= 0;
+unsigned long primerbajada;
+unsigned long diferencia;
+unsigned long margen;
 IPAddress local_IP(192, 168, 1, 101);
-
 IPAddress gateway(192, 168, 1, 1);
-
 IPAddress subnet(255, 255, 255, 0);
+
+WiFiUDP udp;
+WiFiUDP udp2;
+char packetBuffer[255];
+unsigned int localPort = 4444;
+unsigned int localPort2 = 4445;
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -77,21 +85,35 @@ void conectaWifi(){
 }
 void notify(int R1,int L1) {
   if (L1  ==  1) {
-    back(motor1, motor2, -255);         // Reverse Motor 1 and Motor 2 for 1 seconds at full speed
-    movStatus=1;
-  } 
-  if (R1 == 1) {
-    forward(motor1, motor2, 255);
+    forward(motor1, motor2, -255);         
     movStatus=0;
-    Serial.print("Avanzaln");
+    if(WiFi.SSID()=="ESP1"/*ESTe debe ser el ultimo modulo posible*/){
+      if(LEFT == 1){
+        left(motor1,motor2,-255);
+      }
+      else if(RIGHT ==  1){
+        right(motor1,motor2,-255);
+      }
+    }
+  } 
+  else if (R1 == 1) {
+    forward(motor1, motor2, 255);
+    movStatus=1;
+    if(WiFi.SSID()=="ESP1"/*ESTe debe ser el ultimo modulo posible*/){
+      
+      if(LEFT == 1){
+        left(motor1,motor2,255);
+      }
+      else if(RIGHT ==  1){
+        right(motor1,motor2,255);
+      }
+    }
   }
-  if (R1  ==  0 && L1 ==  0) {
+  if (R1  ==  0 && L1 ==  0 || R1  ==  1 && L1 ==  1) {
     brake(motor1, motor2);
     movStatus=-1;
   }
-  if (R1  ==  1 && L1 ==  1) {
-    brake(motor1, motor2);
-  }
+
 } 
 
 
@@ -167,12 +189,13 @@ JsonDocument power(int id, JsonDocument estados){
   int valor=WiFi.RSSI();
 
   if(id !=  0){
-    //Serial.println("no es el pc el que hace la peticion");
+//Serial.println("no es el pc el que hace la peticion");
 
     idmin = id;
     idmax = id;
-    //Serial.print("id del cliente: ");
-    //Serial.println(id);
+    int tiempo;
+    Serial.print("id del cliente: ");
+    Serial.println(id);
     for(JsonPair kv : estados.as<JsonObject>()){
       int key = atoi(kv.key().c_str());
       Serial.print("key: ");
@@ -188,13 +211,23 @@ JsonDocument power(int id, JsonDocument estados){
     }
     Serial.print("id min:");
     Serial.println(idmin);
-    if(valor<-80){
-      previo++;
-      if(id == idmin && previo >= timeout){
-        previo  = 0;
-        deploy++;
-    
+    if(valor<-85 && id == idmin){
+      unsigned long actual  = millis();
+      if(anterior == 0){
+        diferencia  = 0;
+        primerbajada = actual;
+      }else{
+        diferencia  = actual  - primerbajada;
+        margen      = actual  - anterior;
+        if(margen>=1000){
+          primerbajada=actual;
+        }
       }
+      if(diferencia >= 5000){
+        deploy++;
+        diferencia=0;
+      }
+      anterior  = actual;
     }
   }
   /*else{
@@ -204,7 +237,7 @@ JsonDocument power(int id, JsonDocument estados){
   rssi["despliegue"]  = deploy;
   rssi["rssi"]  = valor;
   valorpotencia = valor;
-  //Serial.println(deploy);
+  Serial.println(deploy);
   return rssi;
 }
 String agregar(String nom){       //codigo que genera el siguiente SSID al cual el dispositivo se tiene que conectar.
@@ -229,31 +262,6 @@ void notFound(AsyncWebServerRequest *request) {
   Serial.println("llegó una petición inesperada");
   request->send(404, "text/plain", "Not found");
 }
-AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/control", [](AsyncWebServerRequest *request, JsonVariant &json) {
-  JsonObject jsonObj = json.as<JsonObject>();
-  Serial.println("llega señal del control");
-  request->send(200,"text/plain", "ok");
-
-  int leftX; int leftY;
-  int R1; int L1; int R2; int L2;
-  int UP; int DOWN; int RIGHT; int LEFT;
-  int X; int O; int T; int S;
-
-  rightX = jsonObj["rightX"]; rightY = jsonObj["rightY"];
-  leftX = jsonObj["leftX"]; leftY = jsonObj["leftY"];
-  R1 = jsonObj["R1"]; L1 = jsonObj["L1"]; R2 = jsonObj["R2"]; L2 = jsonObj["L2"];
-  UP = jsonObj["UP"];DOWN = jsonObj["DOWN"];RIGHT = jsonObj["RIGHT"];LEFT = jsonObj["LEFT"];
-  X = jsonObj["X"];O = jsonObj["O"];T = jsonObj["T"];S = jsonObj["S"];
-  if(brazoStatus>=idmin && brazoStatus<=idmax){
-    if(X == 1){
-    brazoStatus--;
-    }
-    else if(T ==  1){
-      brazoStatus++;
-    }
-  }
-  notify(R1,L1);
-});
 
 void setup(){
   Serial.begin(115200);
@@ -353,7 +361,6 @@ void setup(){
   Serial.println(nomwifi);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  server.addHandler(handler);
   server.on("/ping",HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200,"text/plain","1");
   });
@@ -367,14 +374,14 @@ void setup(){
     char ip = request->client()->remoteIP().toString()[12];
     int ia = (ip - '0') - 1;
     if(request->client()->remoteIP()!= remote1_IP || request->client()->remoteIP()!= remote2_IP){
-      //Serial.print("Id del cliente:");
-      //Serial.println(ia);
+      Serial.print("Id del cliente:");
+      Serial.println(ia);
       if(!listamodulos.containsKey(String(ia))){
         listamodulos[String(ia)] = "0";
       }
     }
     else{
-      //Serial.println("es el PC");
+      Serial.println("es el PC");
       ia=0;
     }  
      serializeJsonPretty(power(ia,listamodulos), response);  
@@ -396,6 +403,7 @@ void setup(){
       WiFi.disconnect();
     }  
   });
+  
   server.on("/movstatus", HTTP_GET, [](AsyncWebServerRequest *request){
     String response;
     response = String(movStatus);
@@ -404,21 +412,11 @@ void setup(){
   server.on("/brazostatus", HTTP_GET, [](AsyncWebServerRequest *request){
     String response;
     JsonDocument datosBrazo;
-    int variableLocal1;//Que union se selecciona |||UNA VEZ LISTO HAY QUE CAMBIARLE LOS NOMBRES|||
-    int variableLocal2;//posicion del servo eje x osea la señal rightX
-    int variableLocal3;//posicion del servo eje x osea la señal rightY
-    int variableLocal4;//posicion del servo eje z osea la señal UP
-    int variableLocal5;//posicion del servo eje z osea la señal DOWN
-    variableLocal1  = brazoStatus;//esto probablemente se pueda borrar pero lo dejó asi porque primero que sea funcional
-    variableLocal2  = rightX;
-    variableLocal3  = rightY;
-    variableLocal4  = UP;
-    variableLocal5  = DOWN;
-    datosBrazo["brazostatus"] = variableLocal1;
-    datosBrazo["X"] = variableLocal2;
-    datosBrazo["Y"] = variableLocal3;
-    datosBrazo["Zu"] = variableLocal4;
-    datosBrazo["Zd"] = variableLocal5;
+    datosBrazo["brazostatus"] = brazoStatus;
+    datosBrazo["Y"] = rightY;
+    datosBrazo["X"] = rightX;
+    datosBrazo["Zu"] = UP;
+    datosBrazo["Zd"] = DOWN;
     serializeJsonPretty(datosBrazo,response);
     request->send(200, "application/json", response);
   });
@@ -426,6 +424,9 @@ void setup(){
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   // Start server
   server.begin();
+  udp.begin(localPort);
+  udp2.begin(localPort2);
+  Serial.printf("UDP server : %s:%i \n", WiFi.localIP().toString().c_str(), localPort);
 }
 void loop(){
   if(WiFi.status()!= WL_CONNECTED /*&& valorpotencia<-70*/){
@@ -433,4 +434,40 @@ void loop(){
     WiFi.begin(nel.c_str(),password);
     conectaWifi();
   }
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    int len = udp.read(packetBuffer, 255);
+    if (len > 0) packetBuffer[len - 1] = 0;
+    deserializeJson(control,packetBuffer);
+    rightX = control["rightX"]; rightY = control["rightY"];
+    leftX = control["leftX"]; leftY = control["leftY"];
+    R1 = control["R1"]; L1 = control["L1"]; R2 = control["R2"]; L2 = control["L2"];
+    UP = control["UP"];DOWN = control["DOWN"];RIGHT = control["RIGHT"];LEFT = control["LEFT"];
+    X = control["X"];O = control["O"];T = control["T"];S = control["S"];
+    if(brazoStatus>=idmin && brazoStatus<=idmax){
+      if(X == 1){
+      brazoStatus--;
+      }
+      else if(T ==  1){
+        brazoStatus++;
+      }
+    }
+    notify(R1,L1);
+    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+    udp.printf("UDP packet was received OK\r\n");
+    udp.endPacket();
+  }
+  int packetSize2=udp2.parsePacket();
+  if(packetSize2){
+    Serial.println(udp2.remoteIP());
+    int len = udp2.read(packetBuffer, 255);
+    if (len > 0) packetBuffer[len - 1] = 0;
+    udp2.beginPacket(udp2.remoteIP(), udp2.remotePort());
+    JsonDocument control_modulos;
+    control_modulos["R1"]=R1;
+    control_modulos["L1"]=L1;
+    serializeJson(control_modulos,udp2);
+    udp2.endPacket();
+  }
+  delay(10);
 }

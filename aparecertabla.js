@@ -18,21 +18,26 @@ function creartabla(){
     clone.id="Modulo " + numeroid; 
 
     document.getElementById("bloquesitos").appendChild(clone);
-    document.getElementById(clone.id).children[0].innerHTML="Modulo "+(numeroid-1);
+    document.getElementById(clone.id).children[0].innerHTML="Modulo "+(numeroid);
 
     let medio = document.getElementById(clone.id).children;
-    let ztable = medio[1].children;
-    
-    for(let i = 1;i<(ztable.length);i++){
-        if(ztable[i].nodeName == "TABLE"){
-            let row = ztable[i].children[0].children[1];
-            for(let r=0;r<row.childElementCount;r++){
-                let tieneid = row.children[r].hasAttribute("id");
-                if (typeof row.children[r].id === "string" && row.children[r].id.length !== 0) {
-                    row.children[r].id  = nameid(row.children[r].id,6,numeroid);
-                    row.children[r].innerHTML   =   "0";
-                  }
-            }  
+    let ztable = medio[1].children[0].children;
+
+    for(let i = 0;i<(ztable.length);i++){   
+        let inter = ztable[i].children;
+        for(let m = 0; m<(inter.length);m++){
+            if(inter[m].children[1].nodeName == "TABLE"){
+                let row = inter[m].children[1].children[0].children[1].children;
+                //console.log(row);
+                for(let r=0;r<row.length;r++){
+                    let tieneid = row[r].hasAttribute("id");
+                    //console.log(row[r]);
+                    if (typeof row[r].id === "string" && row[r].id.length !== 0) {
+                        row[r].id  = nameid(row[r].id,6,numeroid);
+                        row[r].innerHTML   =   "0";
+                    }
+                }
+            }
         }
     }  
 }
@@ -124,21 +129,6 @@ function main(){
     }    
 }
 
-function abrir(){
-    var coll = document.getElementsByClassName("collapsible");
-    var i;
-    for (i = 0; i < coll.length; i++) {
-        coll[i].addEventListener("click", function() {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.display === "block") {
-                content.style.display = "none";
-            } else {
-                content.style.display = "block";
-            }
-        });
-    } 
-}
 function iniciar(){
     intervalid=setInterval(main,1000);
     document.getElementById("video").src="http://192.168.1.120:81/stream";
@@ -150,6 +140,3 @@ let intervalid;
 document.getElementById("demo").addEventListener("click", creartabla);
 document.getElementById("iniciar").addEventListener("click",iniciar);
 document.getElementById("parar").addEventListener("click",parar);
-
-
-setInterval(abrir,10);

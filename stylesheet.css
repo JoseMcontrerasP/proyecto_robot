@@ -1,15 +1,18 @@
+/*:root {
+--azulito:
+--grispulento:#c1c1c1
+}*/
+
 body {
-    margin: 0;
-    padding: 0;
-    background-color: honeydew;
+    background-color: #374785;
 }
 .titulo{
-    color: aliceblue;
+    color:  white;
     margin-top: auto;
     padding-top: 2%;
     padding-bottom: 1rem;
     margin-bottom: 1%;
-    background-color: cadetblue;
+    background-color:#24305E;
     h1{
         padding-left: 10%;
         padding-right: 10%;
@@ -18,29 +21,33 @@ body {
 }
 .potencia{
     color: black;
-    border: solid 5px  black;
-    background-color: azure;
+    border: solid 2px  black;
+    background-color: #dfdfdf;
+    padding-left: 3%;
+    margin-left: 2%;
     #wifi{
         align-items: center;
         max-width: 20%;
     }
 }
 
-  
-  /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
-  .active, .collapsible:hover {
-    background-color:rgb(67, 112, 113);
-  }
-  
 
 table{
     border-collapse: collapse; 
     max-width: fit-content; 
 }
+
+.card-header{
+    background-color: #dc3545;
+}
+.card-body{
+    background-color: #dfdfdf;
+}
+
 .modulos {
     overflow: hidden;
     border: solid 1px   black;
-    border-radius: 6px;
+    border-radius: 20px;
     padding-left: 0%;
     padding-right: 0%;
     height: fit-content;
@@ -48,7 +55,7 @@ table{
     h2{
         cursor: pointer;
         color: aliceblue;
-        background-color: cadetblue;
+        background-color: #dc3545;
         padding-top: 5px;
         margin-top: 0px;
         margin-bottom: 0px;
@@ -62,7 +69,7 @@ table{
     }
     th{
         color: aliceblue;
-        background-color: cadetblue;         
+        background-color: #dc3545;         
     }
     td{
         text-align: center;
@@ -79,7 +86,7 @@ table{
     text-align: center;
    }
    #centro,#titulos{
-    background-color: cadetblue;
+    background-color: #dc3545;
     color: white;
    }
    #status{
@@ -91,3 +98,11 @@ table{
     margin: auto;
     margin-bottom: 2%;
 }
+
+
+.card-header .fa {
+    transition: .3s transform ease-in-out;
+  }
+  .card-header .collapsed .fa {
+    transform: rotate(90deg);
+  }

@@ -18,14 +18,16 @@
         </div>
         <h1 class="col-6">Centro de Control</h1>
         <div class="col">
-            <button class= "col" id="iniciar">Inicio Robot</button>
-            <button class= "col" id="parar">Finalizar</button>
+            <button class= "col btn btn-danger" id="iniciar">Inicio Robot</button>
+            <button class= "col btn btn-danger" id="parar">Finalizar</button>
         </div>    
     </div>
     <div id="linea1" class="row">
         <div class="row">
-            <div class="col-6">
-                <img src="img\640x480.jpg" alt="" id="video" class="row">
+            <div class="col-6 ">
+                <div class="card" >
+                    <img src="img\640x480.jpg" alt="" id="video" class="row">
+                </div>
                 <div class="row" id="todo_modulos">
                     <div class="col">
                         <div class="row" id="centro"><h3>Estado de despliegue de los modulos</h3></div>
@@ -55,61 +57,80 @@
                 </div>
             </div>
             <div id="bloquesitos" class="col-6 row">
-                <div class="modulos col-6" id="Modulo 1">
-                    <h2 class="collapsible">Cabeza</h2>
-                    <div>                    
-                        <p class="sensores"> Sensor numero 1:</p>
-                        <table>
-                            <tr>
-                                <th>AQI</th>
-                                <th>TVOC</th>
-                                <th>eCO2</th>
-                            </tr>
-                            <tr>
-                                <td id="valor 110">0</td>
-                                <td id="valor 111">0</td>
-                                <td id="valor 112">0</td>
-                            </tr>
-                        </table>      
-                        <p class="sensores"> Sensor numero 2:</p>
-                        <table>
-                            <tr>
-                                <th>Gas desconocido</th>
-                            </tr>
-                            <tr>
-                                <td id="valor 120">0</td>
-                            </tr>
-                        </table>
-                        <p class="sensores"> Sensor numero 3:</p>
-                        <table>
-                            <tr>
-                                <th>Temperatura</th>
-                                <th>Humedad</th>
-                            </tr>
-                            <tr>
-                                <td id="valor 130">0</td>
-                                <td id="valor 131">0</td>
-                            </tr>
-                        </table>
-                        <p class="sensores"> inclinación</p>
-                        <table>
-                            <tr>
-                                <th>X</th>
-                                <th>Y</th>
-                                <th>Z</th>
-                            </tr>
-                            <tr>
-                                <td id="valor 140">0</td>
-                                <td id="valor 141">0</td>
-                                <td id="valor 142">0</td>
-                            </tr>
-                        </table>
+                <div class="modulos card col-6 margen" id="Modulo 1">
+                    <h2 class="card-header">
+                        Cabeza
+                    </h2>
+                    <div>
+                        <div class="card-body">   
+                            <div class="row">
+                                <div class="col">
+                                    <p class="sensores"> Sensor numero 1:</p>
+                                    <table class="table">
+                                        <tr>
+                                            <th>AQI</th>
+                                            <th>TVOC</th>
+                                            <th>eCO2</th>
+                                        </tr>
+                                        <tr>
+                                            <td id="valor 110">0</td>
+                                            <td id="valor 111">0</td>
+                                            <td id="valor 112">0</td>
+                                        </tr>
+                                    </table>      
+                                </div>
+                                <div class="col">
+                                    <p class="sensores"> Sensor numero 2:</p>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Gas desconocido</th>
+                                        </tr>
+                                        <tr>
+                                            <td id="valor 120">0</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div> 
+                            <div class="row">
+                                <div class="col">
+                                    <p class="sensores"> Sensor numero 3:</p>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Temperatura</th>
+                                            <th>Humedad</th>
+                                        </tr>
+                                        <tr>
+                                            <td id="valor 130">0</td>
+                                            <td id="valor 131">0</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col">
+                                    <p class="sensores"> inclinación</p>
+                                    <table class="table">
+                                        <tr>
+                                            <th>X</th>
+                                            <th>Y</th>
+                                            <th>Z</th>
+                                        </tr>
+                                        <tr>
+                                            <td id="valor 140">0</td>
+                                            <td id="valor 141">0</td>
+                                            <td id="valor 142">0</td>
+                                        </tr>
+                                    </table>                                    
+                                </div>
+                            </div>                
+                            
+                        </div>
                     </div>
+                    
                 </div>
             </div>
         </div>       
         <button class= "col" id="demo">demo</button>
     </div>
     <script src="aparecertabla.js"></script>
+
 </body>
 </html>

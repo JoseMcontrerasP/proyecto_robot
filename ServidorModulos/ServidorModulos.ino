@@ -9,6 +9,7 @@
 #include "Adafruit_MPU6050.h"
 #include "Adafruit_Sensor.h"
 #include <TB6612_ESP32.h>
+#include <WiFiUdp.h>
 
 #define AIN1 19
 #define BIN1 5
@@ -37,13 +38,15 @@ const char* ssid     = "ESP1";
 const char* password = "Passwordsupersegura";
 
 const char* IPhead  = "http://192.168.1.101/RSSI.json";
-const char* IPmov  = "http://192.168.1.101/movstatus";
+//const char* IPmov  = "http://192.168.1.101/movstatus";
 const char* IPbrazo  = "http://192.168.1.101/brazostatus";
 const char* IPpost  = "http://192.168.1.101/estadoModulos";
+
 
 IPAddress local_IP(192, 168, 1, 101+id);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
+IPAddress ipcabeza(192,168,1,101);
 
 int answer = 0;
 int comprobador = 0;
@@ -67,8 +70,14 @@ int rightY;
 int rightX;
 int UP  = 0;
 int DOWN  = 0;
+int R1= 0;
+int L1= 0;
+unsigned int localPort = 4445;
+WiFiUDP udp;
+char packetBuffer[255];
 
 AsyncWebServer server(80);
+JsonDocument control;
 
 JsonDocument leerSensores() {
   sensors_event_t humidity1, temp;
@@ -267,13 +276,16 @@ void movBrazo(){
   }
 }
 
-void moveMotors(bool mtrdir) {
-  if (!mtrdir) {
-    back(motor1, motor2, -255);
+void notify(int R1,int L1) {
+  if (L1  ==  1) {
+    forward(motor1, motor2, -255);         
   } 
-  else {
+  else if (R1 == 1) {
     forward(motor1, motor2, 255);
   }
+  else if (R1  ==  0 && L1 ==  0 || R1  ==  1 && L1 ==  1) {
+    brake(motor1, motor2);
+  }  
 }
 
 void setup(){
@@ -364,7 +376,7 @@ void setup(){
   zbrazo.attach(SERVO_PINB);
   zbrazo.write(zservoPos);
   acople.attach(PIN_ACOPLE);
-  acople.write(90);
+  acople.write(120);
   pinMode(32,OUTPUT);
   digitalWrite(32,LOW);
 
@@ -387,14 +399,14 @@ void setup(){
   Serial.println(nomwifi);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  
+  udp.begin(localPort);
 }
 
 void loop(){  
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
-      acople.write(120);
+      acople.write(90);
       delay(3000);//tiempo para que se desenganche.
       Serial.println("Prendiendo nuevo modulo de conexión");
       digitalWrite(32,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
@@ -457,14 +469,22 @@ void loop(){
 
     //aqui colocar el codigo del movimiento.
     comprobador = answer;
-    int mov = getRequestMov(IPmov);
-    if( mov !=  -1){
-      moveMotors(mov);
-    }
-    else{
-      brake(motor1, motor2);
-    }
+    //mov = getRequestMov(IPmov);
+    udp.beginPacket(ipcabeza, localPort);
+    udp.printf("Manda señal de control \r\n");
+    udp.endPacket();
     
+    int packetSize = udp.parsePacket();
+    Serial.print(" Received packet from : "); Serial.println(udp.remoteIP());
+    Serial.print(" Size : "); Serial.println(packetSize);
+    if (packetSize) {
+      int len = udp.read(packetBuffer, 255);
+      if (len > 0) packetBuffer[len - 1] = 0;
+      deserializeJson(control,packetBuffer);
+      R1=control["R1"];
+      L1=control["L1"];  
+    }
+    notify(R1,L1);
     JsonDocument algo =  getRequestBrazo(IPbrazo);
     if(algo["brazostatus"]  ==  id){
       rightY=algo["Y"];
@@ -473,6 +493,6 @@ void loop(){
       DOWN=algo["Zd"];
       movBrazo();
     }
-    delay(100);  
+    delay(10);  
   }
 }
