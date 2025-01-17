@@ -3,8 +3,6 @@
 #include "HTTPClient.h"
 #include <Ps3Controller.h>
 #include <Wire.h>
-//#include <ETH.h>
-
 
 #define Ledbluetooth 23
 const char* ssid     = "ESP1";
@@ -20,6 +18,7 @@ String nomwifi;
 char packetBuffer[255];
 unsigned int localPort = 4444;
 WiFiUDP udp;
+
 
 int rightX = 0;
 int rightY = 0;
@@ -38,9 +37,10 @@ int O;
 int S;
 int T;
 
-unsigned long previousMillis = 0;
-const long interval = 100;
-static bool eth_connected = false;
+int brazoStatus = 1;//selector de modulos
+int idmin = 1;// id minimo 
+int idmax = 2;// id maximo
+
 
 void notify() {
   leftX  = (Ps3.data.analog.stick.lx);
@@ -76,41 +76,6 @@ void notify() {
 void onConnect() {
   digitalWrite(Ledbluetooth, HIGH);
 }
-/*void WiFiEvent(WiFiEvent_t event){
-  switch (event) {
-    case ARDUINO_EVENT_ETH_START:
-      Serial.println("ETH Started");
-      //set eth hostname here
-      ETH.setHostname("esp32-ethernet");
-      break;
-    case ARDUINO_EVENT_ETH_CONNECTED:
-      Serial.println("ETH Connected");
-      break;
-    case ARDUINO_EVENT_ETH_GOT_IP:
-      Serial.print("ETH MAC: ");
-      Serial.print(ETH.macAddress());
-      Serial.print(", IPv4: ");
-      Serial.print(ETH.localIP());
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
-      eth_connected = true;
-      break;
-    case ARDUINO_EVENT_ETH_DISCONNECTED:
-      Serial.println("ETH Disconnected");
-      eth_connected = false;
-      break;
-    case ARDUINO_EVENT_ETH_STOP:
-      Serial.println("ETH Stopped");
-      eth_connected = false;
-      break;
-    default:
-      break;
-  }
-}*/
 
 void setup(){
     Serial.begin(115200);
@@ -118,7 +83,6 @@ void setup(){
     Ps3.attach(notify);
     Ps3.attachOnConnect(onConnect);
     Ps3.begin("00:00:00:00:00:01");
-    //ETH.begin();
     //primero el movimiento despues incia el wifi y bluetooth
     WiFi.mode(WIFI_STA);
     if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -127,8 +91,6 @@ void setup(){
     WiFi.setSleep(true);
     WiFi.begin(ssid,password);
 
-    //WiFi.onEvent(WiFiEvent);
-    
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -141,45 +103,30 @@ void setup(){
     Serial.println(WiFi.localIP());
     udp.begin(localPort);
 }
-void loop(){
-  //unsigned long currentMillis = millis();
-  //if (currentMillis - previousMillis >= interval) {
-    //ave the last time you blinked the LED    
+void loop(){ 
   if (Ps3.isConnected()) { 
-    int packetSize = udp.parsePacket();
-      Serial.print(" Received packet from : "); Serial.println(udp.remoteIP());
-      Serial.print(" Size : "); Serial.println(packetSize);
-      if (packetSize) {
-        int len = udp.read(packetBuffer, 255);
-        if (len > 0) packetBuffer[len - 1] = 0;
-        Serial.printf("Data : %s\n", packetBuffer);
+    if(brazoStatus>=idmin && brazoStatus<=idmax){
+      if(X == 1 && brazoStatus>1){
+      brazoStatus--;
       }
-      Serial.println("\n");
-      Serial.print("[Client Connected] ");
-      Serial.println(WiFi.localIP());
-      udp.beginPacket("192.168.1.101", localPort);
-      char buf[20];
-      JsonDocument control;
-      String mensaje;  
-      control["rightX"]=rightX;  
-      control["rightY"]=rightY;
-      control["leftX"]=leftX;
-      control["leftY"]=leftY;
-      control["R1"]=R1;
-      control["L1"]=L1;
-      control["UP"]=UP;
-      control["DOWN"]=DOWN;
-      control["RIGHT"]=RIGHT;
-      control["LEFT"]=LEFT;
-      control["X"]=X;
-      control["O"]=O;
-      control["T"]=T;
-      control["S"]=S;
-      serializeJson(control, udp);
-      udp.println();
-      udp.endPacket();
+      else if(T ==  1 && brazoStatus<idmax){
+        brazoStatus++;
+      }
+    }
+    JsonDocument controlmod;
+    udp.beginPacket("192.168.1.101", localPort);
+    controlmod["R1"]=R1;
+    controlmod["L1"]=L1;
+    controlmod["rightX"]=rightX;  
+    controlmod["rightY"]=rightY;
+    controlmod["leftX"]=leftX;
+    controlmod["leftY"]=leftY;
+    controlmod["UP"]=UP;
+    controlmod["DOWN"]=DOWN;
+    controlmod["brazostatus"]=brazoStatus;
+    serializeJson(controlmod, udp);
+    udp.endPacket();
   }
   delay(10);
-    //previousMillis = currentMillis;
-  //}  
 }
+

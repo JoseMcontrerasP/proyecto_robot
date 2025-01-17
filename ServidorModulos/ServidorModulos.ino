@@ -22,16 +22,16 @@
 const int offsetA = 1;
 const int offsetB = 1;
 
-Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,1 );
-Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,2 );
+Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY, 5000 ,8,6 );
+Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY, 5000 ,8,7 );
 
 #define SERVO_PINA 12
 #define SERVO_PINB 13
 #define PIN_ACOPLE 14
 
-int id = 1;/* HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, 
+int id = 2;/* HAY QUE CAMBIARLO PARA CADA MODULO partiendo desde 1, pq la cabeza no tiene id, 
               con el id identificamos que modulo es el que debe prenderse.                 */
-
+unsigned int localPort = 4448; //4445 si es id 1, 4448 si es id 2
 
 // Set your access point network credentials
 const char* ssid     = "ESP1";
@@ -54,8 +54,8 @@ bool flag = true;
 
 String nomwifi;
 
-int xservoPos = 89;
-int zservoPos = 135;
+int xservoPos = 90;
+int zservoPos = 145;
 Servo xbrazo;
 Servo zbrazo;
 Servo acople;
@@ -68,11 +68,12 @@ ScioSense_ENS160      ens160(ENS160_I2CADDR_1);
 int status = 0;
 int rightY;
 int rightX;
+int leftY;
+int leftX;
 int UP  = 0;
 int DOWN  = 0;
 int R1= 0;
 int L1= 0;
-unsigned int localPort = 4445;
 WiFiUDP udp;
 char packetBuffer[255];
 
@@ -107,7 +108,7 @@ JsonDocument leerSensores() {
     Serial.print("eCO2: "); Serial.print(ens160.geteCO2());Serial.println("ppm\t");
   }
   //MPU6050
-  mpu.getEvent(&a, &g, &temp);
+  /*mpu.getEvent(&a, &g, &temp);
   Serial.print("Aceleración: ");
   Serial.print("  X: ");Serial.print(a.acceleration.x);
   Serial.print(", Y: "); Serial.print(a.acceleration.y);
@@ -118,7 +119,7 @@ JsonDocument leerSensores() {
   Serial.print(", Y: "); Serial.print(g.gyro.y);
   Serial.print(", Z: "); Serial.print(g.gyro.z);
   Serial.println(" [rad/s]");
-  Serial.print("Temperatura: "); Serial.print(temp.temperature); Serial.println(" [C]");
+  Serial.print("Temperatura: "); Serial.print(temp.temperature); Serial.println(" [C]");*/
   //Documento Json
   data.add(ens160.getAQI());
   data.add(ens160.getTVOC());
@@ -126,9 +127,9 @@ JsonDocument leerSensores() {
   data2.add(MiCS);
   data3.add(temp.temperature);
   data3.add(humidity);
-  data4.add(g.gyro.x);
+  /*data4.add(g.gyro.x);
   data4.add(g.gyro.y);
-  data4.add(g.gyro.z);
+  data4.add(g.gyro.z);*/
   return sensores;
 }
 int getRequest(const char* servername){
@@ -256,24 +257,30 @@ void movBrazo(){
     xservoPos = 90;
     xbrazo.write(xservoPos);
   }else{
-    if (rightX < -10 && xservoPos < 180) {
-      xservoPos=xservoPos+5;
-      xbrazo.write(xservoPos);
-      }
-
-    if (rightX > 10 && xservoPos > 0) {
+    if (rightX < -10 && xservoPos < 136) {
       xservoPos=xservoPos-5;
       xbrazo.write(xservoPos);
     }
+    if (rightX > 10 && xservoPos > 45) {
+      xservoPos=xservoPos+5;
+      xbrazo.write(xservoPos);
+    }
   }
-  if (UP  ==  1) {
-    zbrazo.write(145);
-    delay(10);
-  } 
-  if (DOWN == 1) {
-    zbrazo.write(90);
-    delay(10);
+  if(DOWN == 1){
+    zbrazo.write(135);
+    delay(1000);
+  }else{
+    if (leftY < -10 && zservoPos < 180) {
+      zservoPos=zservoPos-3;
+      zbrazo.write(zservoPos);
+      }
+
+    if (leftY > 10 && zservoPos > 0) {
+      zservoPos=zservoPos+3;
+      zbrazo.write(zservoPos);
+    }
   }
+
 }
 
 void notify(int R1,int L1) {
@@ -305,7 +312,7 @@ void setup(){
     while (1) delay(10);
     Serial.println("AHT20 no detectado");
   }
-  if (!mpu.begin()) {
+  /*if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1) {
       delay(10);
@@ -368,7 +375,7 @@ void setup(){
     case MPU6050_BAND_5_HZ:
       Serial.println("5 Hz");
       break;
-  }
+  }*/
 
   //Servos eje X,Z y acople 
   xbrazo.attach(SERVO_PINA);
@@ -376,10 +383,9 @@ void setup(){
   zbrazo.attach(SERVO_PINB);
   zbrazo.write(zservoPos);
   acople.attach(PIN_ACOPLE);
-  acople.write(120);
+  acople.write(70);
   pinMode(32,OUTPUT);
   digitalWrite(32,LOW);
-
   //configuración del WIFi
   WiFi.mode(WIFI_STA);
   if (!WiFi.config(local_IP, gateway, subnet)) {
@@ -406,11 +412,14 @@ void loop(){
   if (answer == id){
     while(flag){
       Serial.println("desconectando modulo de la cola");
-      acople.write(90);
+      zbrazo.write(135);
+      delay(500);
+      xbrazo.write(118);
+      delay(500);
+      acople.write(125);
       delay(3000);//tiempo para que se desenganche.
-      
       Serial.println("Prendiendo nuevo modulo de conexión");
-      digitalWrite(33,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
+      digitalWrite(32,  HIGH);//este pin lo que haria seria activar un relee o algo que haga switch que prenda el router o esp32 que hace de nodo de conexión;
       delay(3000);
       status = answer;
       postRequest(IPpost, id, status);
@@ -488,8 +497,10 @@ void loop(){
     notify(R1,L1);
     JsonDocument algo =  getRequestBrazo(IPbrazo);
     if(algo["brazostatus"]  ==  id){
-      rightY=algo["Y"];
-      rightX=algo["X"];      
+      rightY=algo["rY"];
+      rightX=algo["rX"];      
+      leftY=algo["lY"];
+      leftX=algo["lX"];    
       UP=algo["Zu"];
       DOWN=algo["Zd"];
       movBrazo();

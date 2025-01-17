@@ -1,5 +1,6 @@
 #include "esp_camera.h"
 #include <WiFi.h>
+#include "WiFiUDP.h"
 #include "esp_timer.h"
 #include "img_converters.h"
 #include "Arduino.h"
@@ -15,8 +16,13 @@ IPAddress local_IP(192, 168, 1, 120);
 IPAddress gateway(192, 168, 1, 1);
 
 IPAddress subnet(255, 255, 255, 0);
+int despliegue = 0; 
 
-const char* IPhead  = "http://192.168.1.101/RSSI.json";
+const char* IPheadcontrol  = "192.168.1.10l";
+
+char packetBuffer[255];
+unsigned int localPort = 4446;
+WiFiUDP udp;
 
 #define PART_BOUNDARY "123456789000000000000987654321"
 
@@ -90,7 +96,7 @@ String agregar(String nom){       //codigo que genera el siguiente SSID al cual 
   }
   return nombre;
 }
-void power(){
+/*void power(){
   int valor=WiFi.RSSI();
   Serial.println(valor);
   delay(100);
@@ -99,7 +105,7 @@ void power(){
     delay(2000);
   }
 
-}
+}*/
 static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 <html>
   <head>
@@ -322,11 +328,12 @@ void setup() {
   Serial.print("Camera Stream Ready! Go to: http://");
   Serial.println(WiFi.localIP());
   startCameraServer();
+  udp.begin(localPort);
 }
 
 void loop() {
-  power();
-  if(WiFi.status()!= WL_CONNECTED /*&& valorpotencia<-70*/){
+  //power();
+  if(WiFi.status()!= WL_CONNECTED ){
     String nel = agregar(nomwifi);
     WiFi.begin(nel.c_str(),password);
     while (WiFi.status() != WL_CONNECTED) {
@@ -339,5 +346,19 @@ void loop() {
     Serial.println(nomwifi);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    despliegue=0;
+  }else{
+    int packetSize = udp.parsePacket();
+      if (packetSize) {
+        int len = udp.read(packetBuffer, 255);
+        if (len > 0) packetBuffer[len - 1] = 0;
+        //Serial.printf("Data : %s\n", packetBuffer);
+        despliegue = atoi(packetBuffer);
+        Serial.println(despliegue);
+      }
+      if(despliegue == 1){
+        WiFi.disconnect();
+      }
+  delay(10);
   }
 }

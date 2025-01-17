@@ -18,7 +18,7 @@ function creartabla(){
     clone.id="Modulo " + numeroid; 
 
     document.getElementById("bloquesitos").appendChild(clone);
-    document.getElementById(clone.id).children[0].innerHTML="Modulo "+(numeroid);
+    document.getElementById(clone.id).children[0].innerHTML="Modulo "+(numeroid-1);
 
     let medio = document.getElementById(clone.id).children;
     let ztable = medio[1].children[0].children;
@@ -64,44 +64,36 @@ async function recibirsensores(p){
 }
 
 async function wifi(){
-    let url =   "http://192.168.1.101/ping";
-    fetch(url)
-        .then(async function(response){
-            if (response.ok){
-                //console.log("ok");
-                const potencia  = await getjson('http://192.168.1.101/RSSI.json');
-                rssi=potencia["rssi"];
-                //console.log(rssi);
-                if(rssi<0 && rssi>-30){
-                    document.getElementById("wifi").src="img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg";
-                }
-                else if(rssi<-30 && rssi> -65){
-                    document.getElementById("wifi").src="img/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg";
-                }
-                else if(rssi <-65 && rssi> -75){
-                    document.getElementById("wifi").src="img/network_wifi_2_bar_FILL0_wght400_GRAD0_opsz24.svg";
-                }
-                else if(rssi <-80 && rssi>-100){
-                    document.getElementById("wifi").src="img/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg";
-                }
-                document.getElementById("dbm").innerHTML= "la potencia de la señal es de "+rssi+" dBm";
-            }
-            else{
-                console.log("la respuesta del servidor no fue 200");
-            }
-        })
-        .catch(function(error){
-           console.log("no hay conexion con el modulo de cabeza");
-        });
+    const potencia  = await getjson('http://192.168.1.101/RSSI.json');
+    rssi=potencia["rssi"];
+    deploy=potencia["deploy"];
+    listo=potencia["listo"];
 
+    document.getElementById("m"+deploy).innerHTML="Desplegado";
+    //console.log(rssi);
+    if(rssi<0 && rssi>-30){
+        document.getElementById("wifi").src="img/signal_wifi_4_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(rssi<-30 && rssi> -65){
+        document.getElementById("wifi").src="img/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(rssi <-65 && rssi> -75){
+        document.getElementById("wifi").src="img/network_wifi_2_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    else if(rssi <-80 && rssi>-100){
+        document.getElementById("wifi").src="img/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg";
+    }
+    document.getElementById("dbm").innerHTML= "la potencia de la señal es de "+rssi+" dBm"
+    if(listo == 0 ){
+        document.getElementById("m"+deploy).innerHTML="Desplegando... ";
+    }else if(listo == 1 && deploy >0 ){
+        document.getElementById("m"+deploy).innerHTML="Desplegado";
+    }
 }
 
 function main(){
-    wifi();
-    
-    //document.getElementById("video").src="http://192.168.1.120:81/stream";
-    for(let p=1; p<3;p++){ // el 4 es el numero de modulos a evaluer
-        let abo = AbortSignal.timeout(1000);
+    for(let p=1; p<3;p++){ // el 3 es el numero de modulos a evaluer para usar 9 modifique el p<3
+        let abo = AbortSignal.timeout(500);
         let url = 'http://192.168.1.10'+p+'/ping';
         fetch(url,{signal: abo })
             .then(function(response){
@@ -110,12 +102,6 @@ function main(){
                         creartabla();
                     }else{
                         recibirsensores(p);
-                        if(document.getElementById("m"+p)==="1"){
-                            document.getElementById("m"+p).innerHTML="robot en movimiento";
-                        }
-                        else{
-                            document.getElementById("m"+p).innerHTML="Desplegado";
-                        }
                     }
                 }
                 else{                    
@@ -123,18 +109,20 @@ function main(){
                 }
             })
             .catch(function(error){
-                document.getElementById("m"+p).innerHTML="No desplegado";
-                //console.log("no hay conexion con el servidor"+p);
+                console.log("no hay conexion con el servidor"+p);
             });
     }    
 }
 
 function iniciar(){
-    intervalid=setInterval(main,1000);
+    intervalid=setInterval(main,2000);
+    intervalwifi=setInterval(wifi,100);
     document.getElementById("video").src="http://192.168.1.120:81/stream";
 }
 function parar(){
     clearInterval(intervalid);
+    clearInterval(intervalwifi);
+    document.getElementById("video").src="img/640x480.jpg";
 }
 let intervalid;
 document.getElementById("demo").addEventListener("click", creartabla);
